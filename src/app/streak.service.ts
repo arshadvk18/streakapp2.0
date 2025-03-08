@@ -1,6 +1,6 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-
+import { HttpClient } from '@angular/common/http';
 interface Streak {
   name: string;
   count: number;
@@ -22,8 +22,10 @@ export class StreakService {
     { days: 365, badge: '🏆 Legendary Streak' }
   ];
 
-  constructor(@Inject(PLATFORM_ID) private platformId: object) {
+  constructor(@Inject(PLATFORM_ID) private platformId: object,
+  private http: HttpClient) {
     this.isBrowser = isPlatformBrowser(this.platformId);
+    
   }
 
   loadStreaks(): Streak[] {
@@ -78,5 +80,11 @@ export class StreakService {
         saveCallback();
       }, 500);
     }
+  }
+  getHijriDate(lat: number, lon: number) {
+    const apiKey = 'YOUR_API_KEY';  // Replace with your actual API key
+    return this.http.get(
+      `https://api.aladhan.com/v1/gToH?latitude=${lat}&longitude=${lon}&key=${apiKey}`
+    );
   }
 }

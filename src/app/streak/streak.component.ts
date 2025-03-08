@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { StreakService } from '../streak.service';
 import { FormsModule } from '@angular/forms'; 
 import { CommonModule } from '@angular/common';
+import { QuranQuotes, SahihBukhariQuotes, SahihMuslimQuotes } from '../quotes'; 
 
 interface Streak {
   name: string;
@@ -22,7 +23,7 @@ export class StreakComponent implements OnInit {
   newStreakName: string = '';
   newStreakDuration?: number;
   isIndefinite: boolean = false;
-  
+  hijriDate: string = 'Loading...';
   showGoalModal: boolean = false;
   selectedStreakIndex: number | null = null;
 
@@ -32,6 +33,10 @@ export class StreakComponent implements OnInit {
     { days: 100, badge: '🥇 Gold Streak' },
     { days: 365, badge: '🏆 Legendary Streak' }
   ];
+  motivationalQuotes: string[] = [...QuranQuotes, ...SahihBukhariQuotes, ...SahihMuslimQuotes]; 
+  
+  quoteOfTheDay: string = '';
+  savedQuotes: string[] = [];
 
   constructor(private streakService: StreakService) {}
 
@@ -41,6 +46,22 @@ export class StreakComponent implements OnInit {
       isIndefinite: streak.isIndefinite ?? false // Ensure isIndefinite is never undefined
     }));
     this.updateBadges();
+    this.getHijriDate();
+    this.getRandomQuote();
+  }
+  getRandomQuote() {
+    const randomIndex = Math.floor(Math.random() * this.motivationalQuotes.length);
+    this.quoteOfTheDay = this.motivationalQuotes[randomIndex];
+  }
+  getHijriDate() {
+    navigator.geolocation.getCurrentPosition((position) => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      this.streakService.getHijriDate(lat, lon).subscribe((response: any) => {
+        this.hijriDate = `${response.data.hijri.day} ${response.data.hijri.month.en} ${response.data.hijri.year} AH`;
+      });
+    });
   }
 
   addStreak() {
@@ -146,4 +167,18 @@ export class StreakComponent implements OnInit {
   get selectedStreak(): Streak | null {
     return this.selectedStreakIndex !== null ? this.streaks[this.selectedStreakIndex] : null;
   }
+  saveQuote() {
+    if (!this.savedQuotes.includes(this.quoteOfTheDay)) {
+      this.savedQuotes.push(this.quoteOfTheDay);
+      localStorage.setItem('savedQuotes', JSON.stringify(this.savedQuotes));
+    }
+  }
+  
+  loadSavedQuotes() {
+    const storedQuotes = localStorage.getItem('savedQuotes');
+    if (storedQuotes) {
+      this.savedQuotes = JSON.parse(storedQuotes);
+    }
+  }
+  
 }
