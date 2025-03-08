@@ -4,7 +4,7 @@ import { StreakComponent } from './streak/streak.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet,StreakComponent],
+  imports: [StreakComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
