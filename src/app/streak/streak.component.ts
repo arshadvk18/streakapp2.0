@@ -26,6 +26,8 @@ export class StreakComponent implements OnInit {
   hijriDate: string = 'Loading...';
   showGoalModal: boolean = false;
   selectedStreakIndex: number | null = null;
+  showSavedQuotes: boolean = false; // Controls visibility of saved quotes
+
 
   milestoneBadges = [
     { days: 7, badge: '🥉 Bronze Streak' },
@@ -48,6 +50,7 @@ export class StreakComponent implements OnInit {
     this.updateBadges();
     this.getHijriDate();
     this.getRandomQuote();
+    this.loadSavedQuotes(); 
   }
   getRandomQuote() {
     const randomIndex = Math.floor(Math.random() * this.motivationalQuotes.length);
@@ -180,5 +183,7 @@ export class StreakComponent implements OnInit {
       this.savedQuotes = JSON.parse(storedQuotes);
     }
   }
-  
+  toggleSavedQuotes() {
+    this.showSavedQuotes = !this.showSavedQuotes;
+  }
 }

@@ -10,16 +10,50 @@
     </div>
 
     <!-- Motivational Quote Display -->
-    <div class="bg-white p-4 rounded-xl shadow-md border border-gray-300 text-center w-full max-w-xs sm:max-w-md">
+    <div *ngIf="!showSavedQuotes" class="bg-white p-4 rounded-xl shadow-md border border-gray-300 text-center w-full max-w-xs sm:max-w-md">
         <p class="text-gray-900 text-sm sm:text-lg font-semibold italic">
             "{{ quoteOfTheDay }}"
         </p>
-        <button 
-            (click)="saveQuote()"
-            class="mt-2 px-3 py-1 bg-yellow-500 text-white rounded-lg shadow-md hover:bg-yellow-600 transition w-full sm:w-auto"
-        >
-            ⭐ Save to Favorites
-        </button>
+        <div class="mt-2 flex justify-center gap-2 flex-wrap">
+            <button 
+                (click)="saveQuote()"
+                class="px-3 py-1 bg-yellow-500 text-white rounded-lg shadow-md hover:bg-yellow-600 transition sm:w-auto w-full"
+            >
+                ⭐ Save to Favorites
+            </button>
+            <button 
+                (click)="toggleSavedQuotes()" 
+                class="px-3 py-1 bg-yellow-500 text-white rounded-lg shadow-md hover:bg-yellow-600 transition sm:w-auto w-full"
+            >
+                📖 View Saved Quotes
+            </button>
+        </div>
+    </div>
+    
+    <div *ngIf="showSavedQuotes" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-300 text-center w-full max-w-xs sm:max-w-md">
+        <!-- Saved Quotes Header -->
+        <div class="px-4 py-3 bg-gray-50 rounded-lg shadow-inner border border-gray-200">
+            <h2 class="text-gray-900 text-sm sm:text-lg font-semibold italic">
+                ⭐ Saved Quotes
+            </h2>
+        </div>
+    
+        <!-- Saved Quotes List -->
+        <ul class="mt-4 space-y-3 px-4 py-3 bg-gray-50 rounded-lg shadow-inner border border-gray-200">
+            <li *ngFor="let quote of savedQuotes" class="text-gray-900 text-sm sm:text-lg font-semibold italic">
+                "{{ quote }}"
+            </li>
+        </ul>
+    
+        <!-- Buttons Layout (Flex for No Stacking) -->
+        <div class="mt-4 flex justify-center gap-3">
+            <button 
+                (click)="toggleSavedQuotes()" 
+                class="px-4 py-2 bg-yellow-500 text-white rounded-lg shadow-md hover:bg-yellow-600 transition sm:w-auto w-full"
+            >
+                📖 View Today's Quote
+            </button>
+        </div>
     </div>
 
     <!-- Input Section -->
