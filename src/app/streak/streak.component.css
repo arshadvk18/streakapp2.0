@@ -1,32 +1,69 @@
 /* ─────────────────────────────────────────
-   streak-tracker.component.css
+   streak.component.css
    Islamic Streak Tracker — Midnight Gold
+   Full light/dark theme support
 ───────────────────────────────────────── */
 
+/* ─── Theme Variables ─── */
+:host {
+  display: block;
 
-:root {
-  --midnight: #080c14;
-  --navy: #0d1424;
-  --navy-mid: #111c30;
-  --navy-light: #1a2840;
-  --gold: #d4af37;
-  --gold-light: #f0d060;
-  --gold-dim: rgba(212,175,55,0.18);
-  --gold-border: rgba(212,175,55,0.25);
-  --ivory: #f5f0e8;
-  --ivory-dim: rgba(245,240,232,0.6);
-  --ivory-faint: rgba(245,240,232,0.12);
-  --emerald: #1a7a4a;
-  --emerald-glow: rgba(26,122,74,0.3);
-  --radius: 16px;
-  --radius-sm: 10px;
+  /* Dark mode (default) */
+  --bg-root:        #080c14;
+  --bg-card:        #0d1424;
+  --bg-card-mid:    #111c30;
+  --bg-field:       #060a10;
+  --text-primary:   #f5f0e8;
+  --text-secondary: rgba(245,240,232,0.65);
+  --text-muted:     rgba(245,240,232,0.35);
+  --text-faint:     rgba(245,240,232,0.12);
+  --gold:           #d4af37;
+  --gold-light:     #f0d060;
+  --gold-dim:       rgba(212,175,55,0.18);
+  --gold-border:    rgba(212,175,55,0.25);
+  --gold-glow:      rgba(212,175,55,0.4);
+  --card-border:    rgba(212,175,55,0.15);
+  --card-shadow:    rgba(0,0,0,0.5);
+  --emerald:        #4ade80;
+  --emerald-dark:   #1a7a4a;
+  --action-bg:      #060a10;
+  --action-border:  rgba(255,255,255,0.08);
+  --progress-track: rgba(255,255,255,0.07);
+  --radius:         16px;
+  --radius-sm:      10px;
+}
+
+/* Light mode */
+:host-context(html:not(.dark)) {
+  --bg-root:        #f5f0e6;
+  --bg-card:        #ffffff;
+  --bg-card-mid:    #faf7f0;
+  --bg-field:       #f0ebe0;
+  --text-primary:   #1a1208;
+  --text-secondary: rgba(26,18,8,0.7);
+  --text-muted:     rgba(26,18,8,0.5);
+  --text-faint:     rgba(26,18,8,0.06);
+  --gold:           #a07820;
+  --gold-light:     #c49020;
+  --gold-dim:       rgba(160,120,32,0.1);
+  --gold-border:    rgba(160,120,32,0.3);
+  --gold-glow:      rgba(160,120,32,0.25);
+  --card-border:    rgba(160,120,32,0.18);
+  --card-shadow:    rgba(160,120,32,0.1);
+  --emerald:        #166534;
+  --emerald-dark:   #166534;
+  --action-bg:      #f0ebe0;
+  --action-border:  rgba(26,18,8,0.1);
+  --progress-track: rgba(26,18,8,0.08);
+  --radius:         16px;
+  --radius-sm:      10px;
 }
 
 /* ─── Root ─── */
 .streak-root {
   position: relative;
   min-height: 100vh;
-  background: var(--midnight);
+  background: var(--bg-root);
   padding: 100px 16px 48px;
   display: flex;
   flex-direction: column;
@@ -34,7 +71,8 @@
   gap: 28px;
   overflow-x: hidden;
   font-family: 'Lato', sans-serif;
-  color: var(--ivory);
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* ─── Arabesque BG ─── */
@@ -45,6 +83,7 @@
   z-index: 0;
 }
 .arabesque-svg { width: 100%; height: 100%; }
+:host-context(html:not(.dark)) .arabesque-bg { opacity: 0.5; }
 .streak-root > *:not(.arabesque-bg) { position: relative; z-index: 1; }
 
 /* ─── Header ─── */
@@ -81,15 +120,16 @@
 .title-arabic {
   font-family: 'Noto Naskh Arabic', serif;
   font-size: 1.8rem;
+  font-weight: 700;
   color: var(--gold);
-  text-shadow: 0 0 30px rgba(212,175,55,0.4);
+  text-shadow: 0 0 30px var(--gold-glow);
   direction: rtl;
 }
 .title-eng {
   font-family: 'Cinzel Decorative', serif;
   font-size: 1rem;
   font-weight: 400;
-  color: var(--ivory-dim);
+  color: var(--text-secondary);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -105,6 +145,7 @@
   border-radius: 999px;
   font-family: 'Cinzel', serif;
   font-size: 0.7rem;
+  font-weight: 600;
   letter-spacing: 0.1em;
   color: var(--gold);
 }
@@ -114,13 +155,14 @@
 .quote-card {
   width: 100%;
   max-width: 560px;
-  background: var(--navy);
+  background: var(--bg-card);
   border: 1px solid var(--gold-border);
   border-radius: var(--radius);
   padding: 28px 32px;
   text-align: center;
   position: relative;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(212,175,55,0.1);
+  box-shadow: 0 8px 40px var(--card-shadow);
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 .quote-mark {
   font-family: 'Cinzel Decorative', serif;
@@ -135,10 +177,10 @@
 .quote-text {
   font-family: 'Lato', sans-serif;
   font-style: italic;
-  font-weight: 300;
+  font-weight: 400;
   font-size: 0.95rem;
   line-height: 1.75;
-  color: var(--ivory-dim);
+  color: var(--text-secondary);
   margin: 12px 0;
 }
 .quote-actions {
@@ -153,10 +195,11 @@
 .saved-quotes-panel {
   width: 100%;
   max-width: 560px;
-  background: var(--navy);
+  background: var(--bg-card);
   border: 1px solid var(--gold-border);
   border-radius: var(--radius);
   padding: 24px 28px;
+  transition: background 0.3s, border-color 0.3s;
 }
 .panel-header {
   display: flex;
@@ -165,21 +208,30 @@
   gap: 12px;
   font-family: 'Cinzel', serif;
   font-size: 0.8rem;
+  font-weight: 600;
   letter-spacing: 0.15em;
   color: var(--gold);
   margin-bottom: 16px;
 }
 .panel-ornament { opacity: 0.7; }
-.saved-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.saved-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .saved-item {
   display: flex;
   gap: 10px;
   align-items: flex-start;
   font-style: italic;
   font-size: 0.85rem;
-  color: var(--ivory-dim);
+  font-weight: 400;
+  color: var(--text-secondary);
   padding: 10px 12px;
-  background: var(--ivory-faint);
+  background: var(--text-faint);
   border-radius: var(--radius-sm);
   border-left: 2px solid var(--gold-border);
 }
@@ -189,11 +241,12 @@
 .add-form {
   width: 100%;
   max-width: 560px;
-  background: var(--navy);
+  background: var(--bg-card);
   border: 1px solid var(--gold-border);
   border-radius: var(--radius);
   padding: 28px 28px 24px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  box-shadow: 0 8px 40px var(--card-shadow);
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 .form-header {
   display: flex;
@@ -203,38 +256,42 @@
   margin-bottom: 22px;
   font-family: 'Cinzel', serif;
   font-size: 0.85rem;
+  font-weight: 600;
   letter-spacing: 0.12em;
   color: var(--gold);
 }
-.form-header h2 { margin: 0; font-weight: 600; }
+.form-header h2 { margin: 0; font-weight: 700; color: var(--text-primary); }
 .form-fields { display: flex; flex-direction: column; gap: 14px; }
 .input-group { display: flex; flex-direction: column; gap: 6px; }
 .input-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
 .input-row .input-group { flex: 1; min-width: 120px; }
+
 .input-label {
   font-family: 'Cinzel', serif;
   font-size: 0.62rem;
+  font-weight: 600;
   letter-spacing: 0.14em;
-  color: rgba(212,175,55,0.7);
+  color: var(--gold);
   text-transform: uppercase;
 }
 .islamic-input {
   width: 100%;
   padding: 12px 16px;
-  background: var(--midnight);
-  border: 1px solid rgba(212,175,55,0.2);
+  background: var(--bg-field);
+  border: 1px solid var(--gold-border);
   border-radius: var(--radius-sm);
-  color: var(--ivory);
+  color: var(--text-primary);
   font-family: 'Lato', sans-serif;
   font-size: 0.9rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  font-weight: 400;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.3s;
   outline: none;
   box-sizing: border-box;
 }
-.islamic-input::placeholder { color: rgba(245,240,232,0.25); }
+.islamic-input::placeholder { color: var(--text-muted); }
 .islamic-input:focus {
-  border-color: rgba(212,175,55,0.5);
-  box-shadow: 0 0 0 3px rgba(212,175,55,0.08);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-dim);
 }
 
 /* Checkbox */
@@ -244,16 +301,17 @@
   gap: 8px;
   cursor: pointer;
   font-size: 0.82rem;
-  color: var(--ivory-dim);
+  font-weight: 500;
+  color: var(--text-secondary);
   white-space: nowrap;
   padding-bottom: 2px;
 }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 .custom-checkbox {
   width: 20px; height: 20px;
-  border: 1.5px solid rgba(212,175,55,0.4);
+  border: 1.5px solid var(--gold-border);
   border-radius: 5px;
-  background: var(--midnight);
+  background: var(--bg-field);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -264,7 +322,12 @@
   background: var(--gold);
   border-color: var(--gold);
 }
-.custom-checkbox svg { width: 12px; height: 12px; stroke: var(--midnight); stroke-width: 2.5; fill: none; }
+.custom-checkbox svg {
+  width: 12px; height: 12px;
+  stroke: var(--bg-root);
+  stroke-width: 2.5;
+  fill: none;
+}
 
 /* ─── Streaks List ─── */
 .streaks-list {
@@ -276,35 +339,42 @@
 }
 .streak-card {
   position: relative;
-  background: var(--navy);
-  border: 1px solid rgba(212,175,55,0.15);
+  background: var(--bg-card);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   padding: 20px 20px 20px 28px;
   display: flex;
   align-items: center;
   gap: 16px;
   overflow: hidden;
-  transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s, background 0.3s;
+  box-shadow: 0 2px 12px var(--card-shadow);
 }
 .streak-card:hover {
-  border-color: rgba(212,175,55,0.35);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.1);
+  border-color: var(--gold-border);
+  box-shadow: 0 8px 32px var(--card-shadow);
   transform: translateY(-2px);
 }
 .streak-card-accent {
   position: absolute;
   left: 0; top: 0; bottom: 0;
   width: 4px;
-  background: linear-gradient(to bottom, var(--gold), rgba(212,175,55,0.3));
+  background: linear-gradient(to bottom, var(--gold), var(--gold-dim));
   border-radius: 4px 0 0 4px;
 }
 .streak-info { flex: 1; min-width: 0; }
-.streak-name-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+.streak-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
 .streak-name {
   font-family: 'Cinzel', serif;
   font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--ivory);
+  font-weight: 700;
+  color: var(--text-primary);
 }
 .streak-badge {
   font-size: 0.65rem;
@@ -314,9 +384,15 @@
   border-radius: 999px;
   color: var(--gold);
   font-family: 'Cinzel', serif;
+  font-weight: 600;
   letter-spacing: 0.06em;
 }
-.streak-count { display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px; }
+.streak-count {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 8px;
+}
 .count-num {
   font-family: 'Cinzel', serif;
   font-size: 1.8rem;
@@ -324,19 +400,24 @@
   color: var(--gold);
   line-height: 1;
 }
-.count-label { font-size: 0.7rem; color: var(--ivory-dim); letter-spacing: 0.08em; }
+.count-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
 
 .progress-wrap { margin-top: 2px; }
 .progress-bar {
   position: relative;
   height: 4px;
-  background: rgba(255,255,255,0.07);
+  background: var(--progress-track);
   border-radius: 999px;
   overflow: hidden;
 }
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #1a7a4a, var(--gold));
+  background: linear-gradient(90deg, var(--emerald-dark), var(--gold));
   border-radius: 999px;
   transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -344,20 +425,32 @@
   position: absolute;
   top: -4px;
   height: 12px;
-  background: linear-gradient(90deg, transparent, rgba(212,175,55,0.5));
+  background: linear-gradient(90deg, transparent, var(--gold-dim));
   border-radius: 999px;
   filter: blur(4px);
   transition: width 0.6s ease;
 }
-.progress-label { font-size: 0.65rem; color: rgba(245,240,232,0.35); margin-top: 4px; }
-.indefinite-tag { font-size: 0.68rem; color: rgba(212,175,55,0.5); letter-spacing: 0.06em; }
+.progress-label {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.indefinite-tag {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
 
+/* ─── Action Buttons ─── */
 .streak-actions { display: flex; flex-direction: column; gap: 6px; }
 .action-btn {
   width: 36px; height: 36px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: var(--midnight);
+  border: 1px solid var(--action-border);
+  background: var(--action-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -367,12 +460,17 @@
 .action-btn svg { width: 16px; height: 16px; }
 .action-btn.keep svg { fill: #4ade80; }
 .action-btn.keep:hover { background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.3); }
-.action-btn.reset svg { fill: #fbbf24; }
-.action-btn.reset:hover { background: rgba(251,191,36,0.12); border-color: rgba(251,191,36,0.3); }
+.action-btn.reset svg { fill: #f59e0b; }
+.action-btn.reset:hover { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); }
 .action-btn.delete svg { fill: #f87171; }
 .action-btn.delete:hover { background: rgba(248,113,113,0.12); border-color: rgba(248,113,113,0.3); }
 
-/* ─── Buttons ─── */
+/* Light mode action buttons */
+:host-context(html:not(.dark)) .action-btn.keep svg { fill: #166534; }
+:host-context(html:not(.dark)) .action-btn.reset svg { fill: #92400e; }
+:host-context(html:not(.dark)) .action-btn.delete svg { fill: #b91c1c; }
+
+/* ─── Primary Button ─── */
 .btn-primary {
   display: flex;
   align-items: center;
@@ -382,7 +480,7 @@
   padding: 13px 20px;
   background: linear-gradient(135deg, #b8860b, var(--gold), #b8860b);
   background-size: 200% 100%;
-  color: var(--midnight);
+  color: #080c14;
   border: none;
   border-radius: var(--radius-sm);
   font-family: 'Cinzel', serif;
@@ -391,16 +489,18 @@
   letter-spacing: 0.1em;
   cursor: pointer;
   transition: background-position 0.4s, box-shadow 0.2s, transform 0.15s;
-  box-shadow: 0 4px 20px rgba(212,175,55,0.3);
+  box-shadow: 0 4px 20px var(--gold-glow);
 }
 .btn-primary svg { width: 16px; height: 16px; }
 .btn-primary:hover {
   background-position: right;
-  box-shadow: 0 6px 28px rgba(212,175,55,0.45);
+  box-shadow: 0 6px 28px var(--gold-glow);
   transform: translateY(-1px);
 }
 .btn-primary:active { transform: scale(0.98); }
+:host-context(html:not(.dark)) .btn-primary { color: #1a1208; }
 
+/* ─── Gold Button ─── */
 .btn-gold {
   display: inline-flex;
   align-items: center;
@@ -412,30 +512,37 @@
   color: var(--gold);
   font-family: 'Cinzel', serif;
   font-size: 0.68rem;
+  font-weight: 600;
   letter-spacing: 0.08em;
   cursor: pointer;
   transition: background 0.2s, box-shadow 0.2s;
 }
 .btn-gold svg { width: 14px; height: 14px; }
-.btn-gold:hover { background: rgba(212,175,55,0.25); box-shadow: 0 0 16px rgba(212,175,55,0.2); }
+.btn-gold:hover { background: rgba(160,120,32,0.2); box-shadow: 0 0 16px var(--gold-glow); }
 
+/* ─── Ghost Button ─── */
 .btn-ghost {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 8px 18px;
   background: transparent;
-  border: 1px solid rgba(245,240,232,0.12);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
-  color: var(--ivory-dim);
+  color: var(--text-secondary);
   font-family: 'Cinzel', serif;
   font-size: 0.68rem;
+  font-weight: 600;
   letter-spacing: 0.08em;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
 }
 .btn-ghost svg { width: 14px; height: 14px; }
-.btn-ghost:hover { background: var(--ivory-faint); border-color: rgba(245,240,232,0.25); }
+.btn-ghost:hover {
+  background: var(--text-faint);
+  border-color: var(--gold-border);
+  color: var(--text-primary);
+}
 .mt-4 { margin-top: 16px; }
 
 /* ─── Modal ─── */
@@ -450,15 +557,19 @@
   z-index: 200;
   padding: 24px;
 }
+:host-context(html:not(.dark)) .modal-backdrop {
+  background: rgba(26,18,8,0.7);
+}
 .modal-card {
-  background: var(--navy-mid);
+  background: var(--bg-card-mid);
   border: 1px solid var(--gold-border);
   border-radius: 20px;
   padding: 40px 32px;
   max-width: 380px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 0 80px rgba(212,175,55,0.12), 0 24px 64px rgba(0,0,0,0.7);
+  box-shadow: 0 0 80px var(--gold-glow), 0 24px 64px var(--card-shadow);
+  transition: background 0.3s;
 }
 .modal-ornament {
   color: var(--gold);
@@ -470,14 +581,16 @@
 .modal-title {
   font-family: 'Cinzel Decorative', serif;
   font-size: 1.3rem;
+  font-weight: 700;
   color: var(--gold);
   margin: 0 0 12px;
 }
 .modal-body {
   font-size: 0.9rem;
-  color: var(--ivory-dim);
+  font-weight: 400;
+  color: var(--text-secondary);
   line-height: 1.65;
   margin: 0 0 24px;
 }
-.modal-body strong { color: var(--ivory); }
+.modal-body strong { color: var(--text-primary); font-weight: 700; }
 .modal-actions { display: flex; flex-direction: column; gap: 10px; }
