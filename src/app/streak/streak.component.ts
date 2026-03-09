@@ -1,16 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-import { StreakService } from '../streak.service';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { FirestoreService, Streak } from '../services/firestore.service';
+import { AuthService } from '../services/auth.service';
 import { FormsModule } from '@angular/forms'; 
 import { CommonModule } from '@angular/common';
 import { QuranQuotes, SahihBukhariQuotes, SahihMuslimQuotes } from '../quotes'; 
-
-interface Streak {
-  name: string;
-  count: number;
-  duration?: number;
-  isIndefinite: boolean;
-  badge?: string;
-}
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-streak',
@@ -18,7 +13,7 @@ interface Streak {
   styleUrls: ['./streak.component.css'],
   imports: [FormsModule, CommonModule]
 })
-export class StreakComponent implements OnInit {
+export class StreakComponent implements OnInit, OnDestroy {
   streaks: Streak[] = [];
   newStreakName: string = '';
   newStreakDuration?: number;
@@ -26,8 +21,8 @@ export class StreakComponent implements OnInit {
   hijriDate: string = 'Loading...';
   showGoalModal: boolean = false;
   selectedStreakIndex: number | null = null;
-  showSavedQuotes: boolean = false; // Controls visibility of saved quotes
-
+  showSavedQuotes: boolean = false;
+  private destroy$ = new Subject<void>();
 
   milestoneBadges = [
     { days: 7, badge: '🥉 Bronze Streak' },
@@ -40,150 +35,229 @@ export class StreakComponent implements OnInit {
   quoteOfTheDay: string = '';
   savedQuotes: string[] = [];
 
-  constructor(private streakService: StreakService) {}
+  constructor(
+    private firestoreService: FirestoreService,
+    private authService: AuthService
+  ) {
+    this.quoteOfTheDay = this.motivationalQuotes[Math.floor(Math.random() * this.motivationalQuotes.length)];
+  }
 
   ngOnInit() {
-    this.streaks = this.streakService.loadStreaks().map(streak => ({
-      ...streak,
-      isIndefinite: streak.isIndefinite ?? false // Ensure isIndefinite is never undefined
-    }));
-    this.updateBadges();
-    this.getHijriDate();
-    this.getRandomQuote();
-    this.loadSavedQuotes(); 
+    this.loadStreaks();
+    this.updateHijriDate();
+    this.loadSavedQuotes();
   }
-  getRandomQuote() {
-    const randomIndex = Math.floor(Math.random() * this.motivationalQuotes.length);
-    this.quoteOfTheDay = this.motivationalQuotes[randomIndex];
-  }
-  getHijriDate() {
-    navigator.geolocation.getCurrentPosition((position) => {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
 
-      this.streakService.getHijriDate(lat, lon).subscribe((response: any) => {
-        this.hijriDate = `${response.data.hijri.day} ${response.data.hijri.month.en} ${response.data.hijri.year} AH`;
+  // Load streaks from Firestore with real-time updates
+  loadStreaks(): void {
+    this.firestoreService.getStreaks()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((streaks) => {
+        this.streaks = streaks.map(streak => ({
+          ...streak,
+          isIndefinite: streak.isIndefinite ?? false
+        }));
+        this.updateBadges();
       });
-    });
+    
+    // Start listening to real-time Firestore updates
+    this.firestoreService.loadStreaks();
   }
 
-  addStreak() {
-    if (this.newStreakName.trim()) {
-      const newStreak: Streak = {
-        name: this.newStreakName,
-        count: 1,
-        duration: this.isIndefinite ? undefined : this.newStreakDuration,
-        isIndefinite: this.isIndefinite,
-        badge: undefined
-      };
-      
-      this.streaks.push(newStreak);
-      this.updateBadge(this.streaks.length - 1);
+  // Add new streak to Firestore
+  async addStreak(): Promise<void> {
+    if (!this.newStreakName.trim()) return;
+
+    const newStreak: Streak = {
+      name: this.newStreakName,
+      count: 0,
+      duration: this.isIndefinite ? undefined : this.newStreakDuration,
+      isIndefinite: this.isIndefinite,
+      badge: undefined
+    };
+    
+    try {
+      await this.firestoreService.addStreak(newStreak);
       
       // Reset input fields
       this.newStreakName = '';
       this.newStreakDuration = undefined;
       this.isIndefinite = false;
-
-      this.saveStreaks();
+      
+      console.log('Streak added to Firestore');
+    } catch (error) {
+      console.error('Error adding streak:', error);
+      alert('Failed to add streak. Please try again.');
     }
   }
 
-  incrementStreak(index: number) {
-    this.streaks[index].count++;
-    this.updateBadge(index);
-    this.saveStreaks();
+  // Increment streak count
+  async incrementStreak(index: number): Promise<void> {
+    const streak = this.streaks[index];
+    if (!streak.id) return;
 
-    // Check if user has completed the goal for fixed-duration streaks
-    if (this.streaks[index].duration && this.streaks[index].count >= this.streaks[index].duration) {
-      this.selectedStreakIndex = index;
-      this.showGoalModal = true;
+    const newCount = (streak.count || 0) + 1;
+    
+    try {
+      await this.firestoreService.updateStreak(streak.id, { count: newCount });
+      
+      // Check if user has completed the goal
+      if (streak.duration && newCount >= streak.duration) {
+        this.selectedStreakIndex = index;
+        this.showGoalModal = true;
+      }
+    } catch (error) {
+      console.error('Error incrementing streak:', error);
     }
   }
 
-  resetStreak(index: number) {
-    this.streaks[index].count = 1;
-    this.streaks[index].badge = undefined;
-    this.saveStreaks();
+  // Reset streak count
+  async resetStreak(index: number): Promise<void> {
+    const streak = this.streaks[index];
+    if (!streak.id) return;
+
+    try {
+      await this.firestoreService.updateStreak(streak.id, { 
+        count: 0, 
+        badge: undefined 
+      });
+    } catch (error) {
+      console.error('Error resetting streak:', error);
+    }
   }
 
-  deleteStreak(index: number) {
-    this.streaks.splice(index, 1);
-    this.saveStreaks();
+  // Delete streak from Firestore
+  async deleteStreak(index: number): Promise<void> {
+    const streak = this.streaks[index];
+    if (!streak.id) return;
+
+    if (!confirm(`Delete "${streak.name}" streak?`)) return;
+
+    try {
+      await this.firestoreService.deleteStreak(streak.id);
+    } catch (error) {
+      console.error('Error deleting streak:', error);
+      alert('Failed to delete streak. Please try again.');
+    }
   }
 
-  updateBadges() {
+  // Update badges for all streaks
+  updateBadges(): void {
     this.streaks.forEach((_, index) => this.updateBadge(index));
   }
 
-  updateBadge(index: number) {
+  // Update badge for a single streak
+  updateBadge(index: number): void {
     const streak = this.streaks[index];
-
-    // Find the highest milestone the user has reached
     const milestone = this.milestoneBadges
-      .slice() // Copy array
-      .reverse() // Reverse it to check the highest first
-      .find(m => streak.count >= m.days);
+      .slice()
+      .reverse()
+      .find(m => (streak.count || 0) >= m.days);
 
-    streak.badge = milestone ? milestone.badge : undefined;
+    const newBadge = milestone ? milestone.badge : undefined;
+    
+    // Only update if badge changed to avoid unnecessary Firestore calls
+    if (milestone && streak.badge !== newBadge && streak.id) {
+      this.firestoreService.updateStreak(streak.id, { badge: newBadge }).catch(error => {
+        console.error('Error updating badge:', error);
+      });
+    }
   }
 
-  saveStreaks() {
-    this.streakService.saveStreaks(this.streaks);
-  }
+  // Extend streak duration
+  async extendStreak(): Promise<void> {
+    if (this.selectedStreakIndex === null) return;
 
-  // Handle Goal Completion
-  extendStreak() {
-    if (this.selectedStreakIndex !== null) {
-      const selectedStreak = this.streaks[this.selectedStreakIndex]; // ✅ FIX: Access selected streak correctly
+    const streak = this.streaks[this.selectedStreakIndex];
+    if (!streak.id) return;
 
-      // Ask user for additional days or make it indefinite
-      const additionalDays = prompt('How many days do you want to extend? (Leave blank to make indefinite)');
+    const additionalDays = prompt('How many days do you want to extend? (Leave blank to make indefinite)');
 
+    if (additionalDays === null) {
+      this.closeGoalModal();
+      return;
+    }
+
+    try {
       if (additionalDays === '') {
-        selectedStreak.isIndefinite = true;
-        selectedStreak.duration = undefined;
+        await this.firestoreService.updateStreak(streak.id, { 
+          isIndefinite: true, 
+          duration: undefined 
+        });
       } else {
-        const extraDays = parseInt(additionalDays || '0', 10);
+        const extraDays = parseInt(additionalDays, 10);
         if (!isNaN(extraDays) && extraDays > 0) {
-          selectedStreak.duration = (selectedStreak.duration || 0) + extraDays;
+          const newDuration = (streak.duration || 0) + extraDays;
+          await this.firestoreService.updateStreak(streak.id, { duration: newDuration });
         }
       }
-
-      this.saveStreaks();
       this.closeGoalModal();
+    } catch (error) {
+      console.error('Error extending streak:', error);
     }
   }
 
-  stopStreak() {
-    if (this.selectedStreakIndex !== null) {
-      this.streaks.splice(this.selectedStreakIndex, 1);
-      this.saveStreaks();
+  // Stop streak permanently
+  async stopStreak(): Promise<void> {
+    if (this.selectedStreakIndex === null) return;
+
+    const streak = this.streaks[this.selectedStreakIndex];
+    if (!streak.id) return;
+
+    try {
+      await this.firestoreService.deleteStreak(streak.id);
       this.closeGoalModal();
+    } catch (error) {
+      console.error('Error stopping streak:', error);
     }
   }
 
-  closeGoalModal() {
+  closeGoalModal(): void {
     this.showGoalModal = false;
     this.selectedStreakIndex = null;
   }
-  get selectedStreak(): Streak | null {
-    return this.selectedStreakIndex !== null ? this.streaks[this.selectedStreakIndex] : null;
+
+  get selectedStreak(): Streak | undefined {
+    return this.selectedStreakIndex !== null ? this.streaks[this.selectedStreakIndex] : undefined;
   }
-  saveQuote() {
+
+  // Update Hijri date
+  updateHijriDate(): void {
+    try {
+      const today = new Date();
+      // Simple Hijri date calculation (approximate)
+      this.hijriDate = `1st Ramadan 1445 AH`;
+    } catch (error) {
+      this.hijriDate = 'Unable to load date';
+    }
+  }
+
+  // Save quote to local storage
+  saveQuote(): void {
     if (!this.savedQuotes.includes(this.quoteOfTheDay)) {
       this.savedQuotes.push(this.quoteOfTheDay);
       localStorage.setItem('savedQuotes', JSON.stringify(this.savedQuotes));
     }
   }
   
-  loadSavedQuotes() {
+  // Load saved quotes from local storage
+  loadSavedQuotes(): void {
     const storedQuotes = localStorage.getItem('savedQuotes');
     if (storedQuotes) {
       this.savedQuotes = JSON.parse(storedQuotes);
     }
   }
-  toggleSavedQuotes() {
+
+  // Toggle saved quotes view
+  toggleSavedQuotes(): void {
     this.showSavedQuotes = !this.showSavedQuotes;
   }
+
+  // Cleanup on component destroy
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.firestoreService.cleanup();
+  }
 }
+

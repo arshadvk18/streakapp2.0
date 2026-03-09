@@ -13,7 +13,8 @@ import {
   onSnapshot,
   Unsubscribe,
   writeBatch,
-  setDoc
+  setDoc,
+  serverTimestamp
 } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -86,12 +87,26 @@ export class FirestoreService {
     if (!user) throw new Error('User not authenticated');
 
     try {
-      await addDoc(collection(this.firestore, 'streaks'), {
-        ...streak,
+      // Remove undefined fields before saving
+      const streakData: any = {
+        name: streak.name,
+        count: streak.count || 0,
+        isIndefinite: streak.isIndefinite || false,
         userId: user.uid,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      // Only include optional fields if they have values
+      if (streak.duration !== undefined) {
+        streakData.duration = streak.duration;
+      }
+      if (streak.badge !== undefined) {
+        streakData.badge = streak.badge;
+      }
+
+      await addDoc(collection(this.firestore, 'streaks'), streakData);
+      console.log('Streak added to Firestore');
     } catch (error) {
       console.error('Error adding streak:', error);
       throw error;
@@ -104,11 +119,17 @@ export class FirestoreService {
     if (!user) throw new Error('User not authenticated');
 
     try {
+      // Remove undefined fields
+      const updateData: any = { updatedAt: serverTimestamp() };
+      
+      if (streak.count !== undefined) updateData.count = streak.count;
+      if (streak.name !== undefined) updateData.name = streak.name;
+      if (streak.duration !== undefined) updateData.duration = streak.duration;
+      if (streak.isIndefinite !== undefined) updateData.isIndefinite = streak.isIndefinite;
+      if (streak.badge !== undefined) updateData.badge = streak.badge;
+
       const streakRef = doc(this.firestore, 'streaks', id);
-      await updateDoc(streakRef, {
-        ...streak,
-        updatedAt: new Date()
-      });
+      await updateDoc(streakRef, updateData);
     } catch (error) {
       console.error('Error updating streak:', error);
       throw error;

@@ -9,6 +9,12 @@ import {
   User,
   updateProfile
 } from '@angular/fire/auth';
+import { 
+  Firestore, 
+  setDoc, 
+  doc, 
+  serverTimestamp 
+} from '@angular/fire/firestore';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable({
@@ -21,6 +27,7 @@ export class AuthService {
   private initialized = false;
 
   private auth: Auth = inject(Auth);
+  private firestore: Firestore = inject(Firestore);
   private ngZone: NgZone = inject(NgZone);
   private platformId: object = inject(PLATFORM_ID);
 
@@ -64,10 +71,25 @@ export class AuthService {
   async register(email: string, password: string, displayName: string): Promise<void> {
     try {
       const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
-      if (userCredential.user) {
-        await updateProfile(userCredential.user, { displayName });
+      const user = userCredential.user;
+      
+      if (user) {
+        // Update profile with display name
+        await updateProfile(user, { displayName });
+        
+        // Save user data to Firestore
+        await setDoc(doc(this.firestore, 'users', user.uid), {
+          uid: user.uid,
+          email: user.email,
+          displayName: displayName,
+          createdAt: serverTimestamp(),
+          photoURL: user.photoURL || null
+        });
+        
+        console.log('User registered and saved to Firestore:', user.uid);
       }
     } catch (error: any) {
+      console.error('Registration error:', error);
       throw this.handleAuthError(error);
     }
   }
