@@ -1,0 +1,295 @@
+/* namaz-timings.component.css */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=Lato:wght@300;400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap');
+
+/* ─── Theme Variables ─── */
+:host {
+  display: block;
+
+  /* Dark mode (default) */
+  --bg-root:        #080c14;
+  --bg-card:        #0d1424;
+  --bg-card-hover:  #111c30;
+  --text-primary:   #f5f0e8;
+  --text-secondary: rgba(245,240,232,0.6);
+  --text-muted:     rgba(245,240,232,0.35);
+  --gold:           #d4af37;
+  --gold-dim:       rgba(212,175,55,0.1);
+  --gold-border:    rgba(212,175,55,0.25);
+  --gold-glow:      rgba(212,175,55,0.4);
+  --card-border:    rgba(212,175,55,0.12);
+  --card-shadow:    rgba(0,0,0,0.5);
+  --emerald:        #4ade80;
+  --emerald-bg:     rgba(26,122,74,0.15);
+  --emerald-border: rgba(26,122,74,0.3);
+  --pattern-stroke: rgba(212,175,55,0.07);
+}
+
+/* Light mode — applied when <html> has no .dark class */
+:host-context(html:not(.dark)) {
+  --bg-root:        #f5f0e6;
+  --bg-card:        #ffffff;
+  --bg-card-hover:  #faf7f0;
+  --text-primary:   #1a1208;
+  --text-secondary: rgba(26,18,8,0.65);
+  --text-muted:     rgba(26,18,8,0.4);
+  --gold:           #a07820;
+  --gold-dim:       rgba(160,120,32,0.08);
+  --gold-border:    rgba(160,120,32,0.3);
+  --gold-glow:      rgba(160,120,32,0.25);
+  --card-border:    rgba(160,120,32,0.18);
+  --card-shadow:    rgba(160,120,32,0.1);
+  --emerald:        #166534;
+  --emerald-bg:     rgba(22,101,52,0.08);
+  --emerald-border: rgba(22,101,52,0.25);
+  --pattern-stroke: rgba(160,120,32,0.06);
+}
+
+/* ─── Root ─── */
+.namaz-root {
+  position: relative;
+  min-height: 100vh;
+  background: var(--bg-root);
+  padding: 100px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  overflow-x: hidden;
+  font-family: 'Lato', sans-serif;
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* ─── Arabesque BG ─── */
+.arabesque-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.arabesque-svg { width: 100%; height: 100%; }
+.namaz-root > *:not(.arabesque-bg) { position: relative; z-index: 1; }
+
+/* Update SVG pattern color via filter in light mode */
+:host-context(html:not(.dark)) .arabesque-bg { opacity: 0.6; }
+
+/* ─── Header ─── */
+.namaz-header { text-align: center; width: 100%; max-width: 640px; }
+
+.header-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.ornament-line {
+  flex: 1;
+  max-width: 80px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold));
+}
+.ornament-line:last-child {
+  background: linear-gradient(to left, transparent, var(--gold));
+}
+.ornament-diamond { color: var(--gold); font-size: 0.7rem; }
+
+.namaz-title { display: flex; flex-direction: column; gap: 4px; margin: 0; }
+.title-arabic {
+  font-family: 'Noto Naskh Arabic', serif;
+  font-size: 1.8rem;
+  color: var(--gold);
+  text-shadow: 0 0 30px var(--gold-glow);
+  direction: rtl;
+}
+.title-eng {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  letter-spacing: 0.12em;
+}
+
+.namaz-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.hijri-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  border-radius: 999px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+}
+.hijri-badge svg { width: 14px; height: 14px; stroke: var(--gold); }
+
+.next-prayer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: var(--emerald-bg);
+  border: 1px solid var(--emerald-border);
+  border-radius: 999px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  color: var(--emerald);
+  letter-spacing: 0.06em;
+}
+.next-prayer-badge strong { color: var(--text-primary); }
+.next-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--emerald);
+  box-shadow: 0 0 8px var(--emerald);
+  animation: blink 1.5s infinite;
+  display: inline-block;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ─── Loading ─── */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 40px 0;
+}
+.loading-ring { width: 52px; height: 52px; }
+.loading-ring svg { width: 100%; height: 100%; }
+.loading-text {
+  font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+}
+
+/* ─── Prayer Grid ─── */
+.prayer-grid {
+  width: 100%;
+  max-width: 600px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+@media (max-width: 400px) { .prayer-grid { grid-template-columns: 1fr; } }
+
+.prayer-card.wide { grid-column: 1 / -1; }
+
+.prayer-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 24px 20px 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: cardIn 0.5s ease both;
+  animation-delay: calc(var(--i, 0) * 0.08s);
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s, background 0.3s;
+}
+.prayer-card:hover {
+  border-color: var(--gold-border);
+  box-shadow: 0 12px 40px var(--card-shadow);
+  transform: translateY(-3px);
+}
+.prayer-card.active {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold-dim), 0 12px 48px var(--gold-glow);
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.prayer-card-bg {
+  position: absolute;
+  right: -20px; top: -20px;
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--gold-dim) 0%, transparent 70%);
+  pointer-events: none;
+}
+.prayer-card.active .prayer-card-bg {
+  background: radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 70%);
+}
+
+.prayer-symbol {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.prayer-symbol svg { width: 18px; height: 18px; stroke: var(--gold); fill: none; }
+.prayer-card.active .prayer-symbol {
+  background: rgba(212,175,55,0.14);
+  border-color: var(--gold);
+}
+
+.prayer-info { display: flex; flex-direction: column; gap: 1px; }
+.prayer-arabic {
+  font-family: 'Noto Naskh Arabic', serif;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  direction: rtl;
+}
+.prayer-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+}
+
+.prayer-time {
+  font-family: 'Cinzel', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+}
+.prayer-card.wide .prayer-time { font-size: 1.8rem; }
+
+.active-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  color: var(--emerald);
+  margin-top: 4px;
+}
+.active-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--emerald);
+  box-shadow: 0 0 8px var(--emerald);
+  animation: blink 1.5s infinite;
+  display: inline-block;
+}
+
+/* ─── Light mode card shadow refinement ─── */
+:host-context(html:not(.dark)) .prayer-card {
+  box-shadow: 0 2px 12px rgba(160,120,32,0.06);
+}
+:host-context(html:not(.dark)) .prayer-card:hover {
+  box-shadow: 0 8px 28px rgba(160,120,32,0.14);
+}

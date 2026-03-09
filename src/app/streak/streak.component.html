@@ -1,171 +1,179 @@
-<div class="min-h-screen bg-gradient-to-br from-green-100 to-green-300 dark:from-green-900 dark:to-green-800 flex flex-col items-center py-8 px-4 sm:px-6">
-    <!-- App Title -->
-    <h1 class="text-4xl sm:text-5xl font-extrabold text-green-800 dark:text-green-100 text-center drop-shadow-xl mb-8">
-        🕌 Islamic Streak Tracker
+<!-- ================================================
+  streak-tracker.component.html
+  Paste this as the `template` (or templateUrl) for your streak tracker component.
+  Companion styles go in streak-tracker.component.css
+================================================ -->
+<div class="streak-root">
+
+  <!-- Geometric arabesque background -->
+  <div class="arabesque-bg" aria-hidden="true">
+    <svg class="arabesque-svg" viewBox="0 0 800 800" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <pattern id="geo" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+          <path d="M40 0 L80 20 L80 60 L40 80 L0 60 L0 20 Z" fill="none" stroke="rgba(212,175,55,0.07)" stroke-width="0.8"/>
+          <path d="M40 10 L70 25 L70 55 L40 70 L10 55 L10 25 Z" fill="none" stroke="rgba(212,175,55,0.04)" stroke-width="0.5"/>
+          <circle cx="40" cy="40" r="3" fill="none" stroke="rgba(212,175,55,0.06)" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#geo)"/>
+    </svg>
+  </div>
+
+  <!-- Header -->
+  <header class="streak-header">
+    <div class="header-ornament">
+      <span class="ornament-line"></span>
+      <span class="ornament-diamond">◆</span>
+      <span class="ornament-line"></span>
+    </div>
+    <h1 class="streak-title">
+      <span class="title-arabic">مُتَابِعُ العِبَادَة</span>
+      <span class="title-eng">Islamic Streak Tracker</span>
     </h1>
+    <div class="hijri-badge">
+      <svg viewBox="0 0 16 16" fill="none"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM8 4v4l3 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      {{ hijriDate }}
+    </div>
+  </header>
 
-    <!-- Stats Component -->
-    <app-stats></app-stats>
+  <!-- Stats -->
+  <app-stats></app-stats>
 
-    <!-- Hijri Date Display -->
-    <div class="text-gray-800 dark:text-gray-200 font-semibold text-base sm:text-lg mb-4">
-        📅 Hijri Date: <span class="text-green-600 dark:text-green-400">{{ hijriDate }}</span>
+  <!-- Quote card -->
+  <div class="quote-card" *ngIf="!showSavedQuotes">
+    <div class="quote-mark open">&ldquo;</div>
+    <p class="quote-text">{{ quoteOfTheDay }}</p>
+    <div class="quote-mark close">&rdquo;</div>
+    <div class="quote-actions">
+      <button class="btn-gold" (click)="saveQuote()">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+        Save Quote
+      </button>
+      <button class="btn-ghost" (click)="toggleSavedQuotes()">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        Saved Quotes
+      </button>
+    </div>
+  </div>
+
+  <!-- Saved quotes panel -->
+  <div class="saved-quotes-panel" *ngIf="showSavedQuotes">
+    <div class="panel-header">
+      <span class="panel-ornament">✦</span>
+      <h3>Saved Quotes</h3>
+      <span class="panel-ornament">✦</span>
+    </div>
+    <ul class="saved-list">
+      <li *ngFor="let quote of savedQuotes" class="saved-item">
+        <span class="saved-bullet">◆</span>
+        <span>"{{ quote }}"</span>
+      </li>
+    </ul>
+    <button class="btn-ghost mt-4" (click)="toggleSavedQuotes()">← Back to Today's Quote</button>
+  </div>
+
+  <!-- Add habit form -->
+  <div class="add-form">
+    <div class="form-header">
+      <span class="ornament-diamond small">◆</span>
+      <h2>Track a New Habit</h2>
+      <span class="ornament-diamond small">◆</span>
     </div>
 
-    <!-- Motivational Quote Display -->
-    <div *ngIf="!showSavedQuotes" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border border-gray-300 dark:border-gray-600 text-center w-full max-w-xs sm:max-w-md">
-        <p class="text-gray-900 dark:text-gray-100 text-sm sm:text-lg font-semibold italic">
-            "{{ quoteOfTheDay }}"
-        </p>
-        <div class="mt-2 flex justify-center gap-2 flex-wrap">
-            <button 
-                (click)="saveQuote()"
-                class="px-3 py-1 bg-yellow-500 text-white rounded-lg shadow-md hover:bg-yellow-600 transition sm:w-auto w-full"
-            >
-                ⭐ Save to Favorites
-            </button>
-            <button 
-                (click)="toggleSavedQuotes()" 
-                class="px-3 py-1 bg-yellow-500 text-white rounded-lg shadow-md hover:bg-yellow-600 transition sm:w-auto w-full"
-            >
-                📖 View Saved Quotes
-            </button>
+    <div class="form-fields">
+      <div class="input-group">
+        <label class="input-label">Habit Name</label>
+        <input
+          type="text"
+          [(ngModel)]="newStreakName"
+          placeholder="e.g. Fajr on time, Quran recitation…"
+          class="islamic-input"
+        />
+      </div>
+
+      <div class="input-row">
+        <div class="input-group flex-1">
+          <label class="input-label">Duration (days)</label>
+          <input
+            type="number"
+            [(ngModel)]="newStreakDuration"
+            placeholder="Optional"
+            class="islamic-input"
+          />
         </div>
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="isIndefinite" class="sr-only"/>
+          <span class="custom-checkbox" [class.checked]="isIndefinite">
+            <svg *ngIf="isIndefinite" viewBox="0 0 12 12" fill="currentColor"><path d="M10 3L5 8.5 2 5.5"/></svg>
+          </span>
+          <span>Indefinite</span>
+        </label>
+      </div>
+
+      <button class="btn-primary" (click)="addStreak()">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"/></svg>
+        Add Habit
+      </button>
     </div>
-    
-    <div *ngIf="showSavedQuotes" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-300 dark:border-gray-600 text-center w-full max-w-xs sm:max-w-md">
-        <!-- Saved Quotes Header -->
-        <div class="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner border border-gray-200 dark:border-gray-600">
-            <h2 class="text-gray-900 dark:text-gray-100 text-sm sm:text-lg font-semibold italic">
-                ⭐ Saved Quotes
-            </h2>
+  </div>
+
+  <!-- Streak list -->
+  <div class="streaks-list">
+    <div *ngFor="let streak of streaks; let i = index" class="streak-card">
+      <div class="streak-card-accent"></div>
+
+      <div class="streak-info">
+        <div class="streak-name-row">
+          <span class="streak-name">{{ streak.name }}</span>
+          <span *ngIf="streak.badge" class="streak-badge">{{ streak.badge }}</span>
         </div>
-    
-        <!-- Saved Quotes List -->
-        <ul class="mt-4 space-y-3 px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner border border-gray-200 dark:border-gray-600">
-            <li *ngFor="let quote of savedQuotes" class="text-gray-900 dark:text-gray-100 text-sm sm:text-lg font-semibold italic">
-                "{{ quote }}"
-            </li>
-        </ul>
-    
-        <!-- Buttons Layout (Flex for No Stacking) -->
-        <div class="mt-4 flex justify-center gap-3">
-            <button 
-                (click)="toggleSavedQuotes()" 
-                class="px-4 py-2 bg-yellow-500 text-white rounded-lg shadow-md hover:bg-yellow-600 transition sm:w-auto w-full"
-            >
-                📖 View Today's Quote
-            </button>
+
+        <div class="streak-count">
+          <span class="count-num">{{ streak.count }}</span>
+          <span class="count-label">days</span>
         </div>
-    </div>
 
-    <!-- Input Section -->
-    <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-xs sm:max-w-md border border-gray-300 mt-6">
-        <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-5 text-center">Track Your Daily Islamic Habits</h2>
-
-        <div class="flex flex-col space-y-4">
-            <input
-                type="text"
-                [(ngModel)]="newStreakName"
-                placeholder="Enter Habit Name"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-md focus:ring-2 focus:ring-green-500 focus:outline-none transition bg-white text-gray-900 text-sm sm:text-base"
-            />
-
-            <div class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-                <input
-                    type="number"
-                    [(ngModel)]="newStreakDuration"
-                    placeholder="Days (Optional)"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-md focus:ring-2 focus:ring-green-500 focus:outline-none transition bg-white text-gray-900 text-sm sm:text-base"
-                />
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" [(ngModel)]="isIndefinite" class="form-checkbox h-5 w-5 text-green-500" />
-                    <span class="text-gray-700 text-sm">Indefinite</span>
-                </label>
-            </div>
-
-            <button
-                (click)="addStreak()"
-                class="w-full px-5 py-3 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl font-semibold shadow-lg hover:scale-105 transform transition duration-200 text-sm sm:text-base"
-            >
-                ➕ Add Habit
-            </button>
+        <div *ngIf="streak.duration && !streak.isIndefinite" class="progress-wrap">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="(streak.count / streak.duration) * 100"></div>
+            <div class="progress-glow" [style.width.%]="(streak.count / streak.duration) * 100"></div>
+          </div>
+          <div class="progress-label">{{ streak.count }} / {{ streak.duration }} days</div>
         </div>
+        <div *ngIf="streak.isIndefinite" class="indefinite-tag">♾ Ongoing Journey</div>
+      </div>
+
+      <div class="streak-actions">
+        <button class="action-btn keep" (click)="incrementStreak(i)" title="Keep Going">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03z"/></svg>
+        </button>
+        <button class="action-btn reset" (click)="resetStreak(i)" title="Reset">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+        </button>
+        <button class="action-btn delete" (click)="deleteStreak(i)" title="Delete">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zm-1 7a1 1 0 112 0v4a1 1 0 11-2 0V9zm4 0a1 1 0 112 0v4a1 1 0 11-2 0V9z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
     </div>
+  </div>
 
-    <!-- Streak List -->
-    <div class="mt-8 w-full max-w-xs sm:max-w-md">
-        <ul class="space-y-4">
-            <li 
-                *ngFor="let streak of streaks; let i = index"
-                class="bg-white p-4 sm:p-6 rounded-2xl shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 border-l-8 border-green-500 transition transform hover:shadow-2xl hover:scale-105"
-            >
-                <div class="w-full">
-                    <span class="text-base sm:text-lg font-semibold text-gray-900">
-                        {{ streak.name }} - Streak:
-                        <span class="font-bold text-green-600">{{ streak.count }}</span> days
-                    </span>
-
-                    <div *ngIf="streak.badge" class="mt-2 text-sm font-semibold text-yellow-600">
-                        🎉 {{ streak.badge }}
-                    </div>
-
-                    <!-- Progress Bar for Fixed Streaks -->
-                    <div *ngIf="streak.duration && !streak.isIndefinite" class="mt-2">
-                        <div class="w-full bg-gray-200 rounded-full h-3 sm:h-4 shadow-inner">
-                            <div 
-                                class="bg-green-500 h-3 sm:h-4 rounded-full transition-all duration-500"
-                                [style.width.%]="(streak.count / streak.duration) * 100"
-                            ></div>
-                        </div>
-                        <span class="text-xs sm:text-sm text-gray-600">{{ streak.count }} / {{ streak.duration }} days</span>
-                    </div>
-                </div>
-
-                <div class="flex space-x-2 sm:space-x-3">
-                    <button
-                        (click)="incrementStreak(i)"
-                        class="px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-lg font-medium shadow-md hover:bg-blue-600 hover:scale-105 transform transition text-xs sm:text-sm"
-                    >
-                        🔥 Keep Going
-                    </button>
-                    <button
-                        (click)="resetStreak(i)"
-                        class="px-3 sm:px-4 py-2 bg-yellow-500 text-white rounded-lg font-medium shadow-md hover:bg-yellow-600 hover:scale-105 transform transition text-xs sm:text-sm"
-                    >
-                        🔄 Reset
-                    </button>
-                    <button
-                        (click)="deleteStreak(i)"
-                        class="px-3 sm:px-4 py-2 bg-red-600 text-white font-medium border border-red-700 rounded-lg shadow-md hover:bg-red-700 hover:scale-105 transform transition text-xs sm:text-sm"
-                    >
-                        ❌ Delete
-                    </button>
-                </div>
-            </li>
-        </ul>
+  <!-- Goal modal -->
+  <div class="modal-backdrop" *ngIf="showGoalModal">
+    <div class="modal-card">
+      <div class="modal-ornament">◆ ◇ ◆</div>
+      <h2 class="modal-title">Goal Achieved!</h2>
+      <p class="modal-body">
+        MashaAllah! You completed <strong>{{ selectedStreak?.duration ?? 0 }} days</strong> of this habit. Would you like to continue?
+      </p>
+      <div class="modal-actions">
+        <button class="btn-primary" (click)="extendStreak()">
+          Continue Journey
+        </button>
+        <button class="btn-ghost" (click)="stopStreak()">
+          Mark Complete
+        </button>
+      </div>
     </div>
+  </div>
 
-    <!-- Goal Completion Modal -->
-    <div *ngIf="showGoalModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center px-4">
-        <div class="bg-white p-6 rounded-lg shadow-2xl max-w-xs sm:max-w-md w-full">
-            <h2 class="text-lg font-bold text-gray-900 mb-4 text-center">🎉 Goal Achieved!</h2>
-            <p class="text-gray-700 text-center text-sm sm:text-base">You achieved your streak goal of {{ selectedStreak?.duration ?? 0 }} days. Would you like to continue?</p>
-            
-            <div class="mt-4 flex flex-col space-y-3">
-                <button 
-                    (click)="extendStreak()"
-                    class="w-full px-4 py-2 bg-green-500 text-white rounded-lg font-medium shadow-md hover:bg-green-600 transition text-sm sm:text-base"
-                >
-                    ➕ Extend Streak
-                </button>
-                <button 
-                    (click)="stopStreak()"
-                    class="w-full px-4 py-2 bg-gray-500 text-white rounded-lg font-medium shadow-md hover:bg-gray-600 transition text-sm sm:text-base"
-                >
-                    ⛔ Stop Streak
-                </button>
-            </div>
-        </div>
-    </div>
 </div>

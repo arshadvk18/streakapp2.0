@@ -1,14 +1,15 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ThemeService } from '../services/theme.service';
 
 @Component({
   selector: 'app-navbar',
+  standalone: true,
+  imports: [CommonModule, RouterLink, RouterLinkActive],
   templateUrl: './navbar.component.html',
-  imports:[CommonModule,RouterLink],
-  standalone:true
+  styleUrls: ['./navbar.component.css']
 })
 export class NavbarComponent implements OnInit {
   menuOpen = false;
@@ -24,15 +25,15 @@ export class NavbarComponent implements OnInit {
     });
   }
 
-  toggleMenu() {
+  toggleMenu(): void {
     this.menuOpen = !this.menuOpen;
   }
 
-  toggleDarkMode() {
+  toggleDarkMode(): void {
     this.themeService.toggleTheme();
   }
 
-  async logout() {
+  async logout(): Promise<void> {
     try {
       await this.authService.logout();
       this.router.navigate(['/auth']);

@@ -1,69 +1,97 @@
-<nav class="bg-green-700 text-white w-full fixed top-0 z-50 shadow-lg dark:bg-green-900">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center py-4">
-        <!-- App Title -->
-        <a routerLink="/" class="text-2xl font-bold tracking-wide">
-          🕌 Islamic App
-        </a>
-  
-        <!-- Mobile Menu Button -->
-        <div class="sm:hidden flex items-center gap-4">
-          <button (click)="toggleDarkMode()" class="focus:outline-none">
-            <span class="text-xl">{{ isDarkMode ? '☀️' : '🌙' }}</span>
-          </button>
-          <button (click)="toggleMenu()" class="focus:outline-none">
-            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 6h16M4 12h16m-7 6h7"></path>
-            </svg>
-          </button>
-        </div>
-  
-        <!-- Desktop Menu -->
-        <ul class="hidden sm:flex space-x-6 items-center">
-          <li><a routerLink="/streak" routerLinkActive="font-bold text-yellow-300" class="hover:text-yellow-400 transition">My Streaks</a></li>
-          <li><a routerLink="/namaztimings" routerLinkActive="font-bold text-yellow-300" class="hover:text-yellow-400 transition">Namaz Time</a></li>
-          <li><a routerLink="/qibla" routerLinkActive="font-bold text-yellow-300" class="hover:text-yellow-400 transition">Qibla</a></li>
-          <li><a routerLink="/settings" routerLinkActive="font-bold text-yellow-300" class="hover:text-yellow-400 transition">Settings</a></li>
-          <li>
-            <button 
-              (click)="toggleDarkMode()"
-              class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition text-xl"
-            >
-              {{ isDarkMode ? '☀️' : '🌙' }}
-            </button>
-          </li>
-          <li>
-            <button 
-              (click)="logout()"
-              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold"
-            >
-              Logout
-            </button>
-          </li>
-        </ul>
+<!-- navbar.component.html -->
+<!-- navbar.component.html -->
+<nav class="navbar">
+  <!-- Geometric top border -->
+  <div class="navbar-border" aria-hidden="true"></div>
+
+  <div class="navbar-inner">
+
+    <!-- Brand -->
+    <a routerLink="/" class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 32 32" fill="none">
+          <path d="M16 4C9.373 4 4 9.373 4 16s5.373 12 12 12 12-5.373 12-12S22.627 4 16 4z" stroke="#d4af37" stroke-width="1"/>
+          <path d="M16 8a8 8 0 018 8h-4a4 4 0 00-4-4V8z" fill="rgba(212,175,55,0.25)"/>
+          <path d="M24 12l2-2M8 20l-2 2M20 8l2-2" stroke="#d4af37" stroke-width="1" stroke-linecap="round"/>
+        </svg>
       </div>
+      <div class="brand-text">
+        <span class="brand-arabic">نور</span>
+        <span class="brand-eng">Islamic App</span>
+      </div>
+    </a>
+
+    <!-- Desktop nav -->
+    <ul class="desktop-nav">
+      <li>
+        <a routerLink="/streak" routerLinkActive="nav-active" class="nav-link">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03z"/></svg>
+          My Streaks
+        </a>
+      </li>
+      <li>
+        <a routerLink="/namaztimings" routerLinkActive="nav-active" class="nav-link">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+          Prayer Times
+        </a>
+      </li>
+      <li>
+        <a routerLink="/qibla" routerLinkActive="nav-active" class="nav-link">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+          Qibla
+        </a>
+      </li>
+      <li>
+        <a routerLink="/settings" routerLinkActive="nav-active" class="nav-link">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+          Settings
+        </a>
+      </li>
+    </ul>
+
+    <!-- Right controls -->
+    <div class="nav-controls">
+      <button class="theme-btn" (click)="toggleDarkMode()" [attr.aria-label]="isDarkMode ? 'Light mode' : 'Dark mode'">
+        <svg *ngIf="isDarkMode" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+        <svg *ngIf="!isDarkMode" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+      </button>
+      <button class="logout-btn" (click)="logout()">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/></svg>
+        Logout
+      </button>
+      <!-- Mobile hamburger -->
+      <button class="hamburger" (click)="toggleMenu()" [class.open]="menuOpen" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
     </div>
-  
-    <!-- Mobile Menu -->
-    <div *ngIf="menuOpen" class="sm:hidden bg-green-800 dark:bg-green-950">
-      <ul class="flex flex-col items-center py-4 space-y-3">
-        <li><a routerLink="/streak" routerLinkActive="font-bold text-yellow-300" class="block py-2 px-4 hover:text-yellow-400 transition">My Streaks</a></li>
-        <li><a routerLink="/namaztimings" routerLinkActive="font-bold text-yellow-300" class="block py-2 px-4 hover:text-yellow-400 transition">Namaz Time</a></li>
-        <li><a routerLink="/qibla" routerLinkActive="font-bold text-yellow-300" class="block py-2 px-4 hover:text-yellow-400 transition">Qibla</a></li>
-        <li><a routerLink="/settings" routerLinkActive="font-bold text-yellow-300" class="block py-2 px-4 hover:text-yellow-400 transition">Settings</a></li>
-        <li>
-          <button 
-            (click)="logout()"
-            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold w-full"
-          >
-            Logout
-          </button>
-        </li>
-      </ul>
+  </div>
+
+  <!-- Mobile menu -->
+  <div class="mobile-menu" [class.open]="menuOpen">
+    <div class="mobile-menu-inner">
+      <a routerLink="/streak" routerLinkActive="nav-active" class="mobile-link" (click)="menuOpen=false">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03z"/></svg>
+        My Streaks
+      </a>
+      <a routerLink="/namaztimings" routerLinkActive="nav-active" class="mobile-link" (click)="menuOpen=false">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+        Prayer Times
+      </a>
+      <a routerLink="/qibla" routerLinkActive="nav-active" class="mobile-link" (click)="menuOpen=false">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+        Qibla
+      </a>
+      <a routerLink="/settings" routerLinkActive="nav-active" class="mobile-link" (click)="menuOpen=false">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+        Settings
+      </a>
+      <div class="mobile-divider"></div>
+      <button class="mobile-logout" (click)="logout()">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/></svg>
+        Logout
+      </button>
     </div>
-  </nav>
-  
-  <!-- Add spacing below navbar -->
-  <div class="pt-16"></div>
+  </div>
+</nav>
+
+<div class="navbar-spacer"></div>

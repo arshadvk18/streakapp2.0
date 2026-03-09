@@ -6,10 +6,10 @@ import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-auth',
-  templateUrl: './auth.component.html',
-  styleUrls: ['./auth.component.css'],
+  standalone: true,
   imports: [CommonModule, FormsModule],
-  standalone: true
+  templateUrl: './auth.component.html',
+  styleUrls: ['./auth.component.css']
 })
 export class AuthComponent implements OnInit {
   isLogin = true;
@@ -21,13 +21,16 @@ export class AuthComponent implements OnInit {
   successMessage = '';
   loading = false;
 
+  // Password visibility toggles
+  showPassword = false;
+  showConfirm = false;
+
   constructor(
     private authService: AuthService,
     private router: Router
   ) {}
 
-  ngOnInit() {
-    // Redirect if already logged in
+  ngOnInit(): void {
     this.authService.getIsLoggedIn().subscribe(isLoggedIn => {
       if (isLoggedIn) {
         this.router.navigate(['/streak']);
@@ -35,25 +38,26 @@ export class AuthComponent implements OnInit {
     });
   }
 
-  toggleMode() {
+  toggleMode(): void {
     this.isLogin = !this.isLogin;
     this.errorMessage = '';
     this.successMessage = '';
+    this.showPassword = false;
+    this.showConfirm = false;
     this.resetForm();
   }
 
-  async handleSubmit() {
+  async handleSubmit(): Promise<void> {
     this.errorMessage = '';
     this.successMessage = '';
 
-    // Validation
     if (!this.email || !this.password) {
       this.errorMessage = 'Email and password are required';
       return;
     }
 
     if (!this.isLogin) {
-      if (!this.displayName) {
+      if (!this.displayName.trim()) {
         this.errorMessage = 'Name is required';
         return;
       }
@@ -76,18 +80,18 @@ export class AuthComponent implements OnInit {
         this.router.navigate(['/streak']);
       } else {
         await this.authService.register(this.email, this.password, this.displayName);
-        this.successMessage = 'Account created! Logging in...';
+        this.successMessage = 'Account created! Logging in…';
         await this.authService.login(this.email, this.password);
         this.router.navigate(['/streak']);
       }
     } catch (error: any) {
-      this.errorMessage = error || 'An error occurred';
+      this.errorMessage = error || 'An error occurred. Please try again.';
     } finally {
       this.loading = false;
     }
   }
 
-  resetForm() {
+  private resetForm(): void {
     this.email = '';
     this.password = '';
     this.displayName = '';

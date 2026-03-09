@@ -3,15 +3,16 @@ import { FirestoreService, Streak } from '../services/firestore.service';
 import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notification.service';
 import { HttpClient } from '@angular/common/http';
-import { FormsModule } from '@angular/forms'; 
+import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { StatsComponent } from '../components/stats.component';
-import { QuranQuotes, SahihBukhariQuotes, SahihMuslimQuotes } from '../quotes'; 
+import { QuranQuotes, SahihBukhariQuotes, SahihMuslimQuotes } from '../quotes';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-streak',
+  standalone: true,
   templateUrl: './streak.component.html',
   styleUrls: ['./streak.component.css'],
   imports: [FormsModule, CommonModule, StatsComponent]
@@ -27,56 +28,49 @@ export class StreakComponent implements OnInit, OnDestroy {
   showSavedQuotes: boolean = false;
   private destroy$ = new Subject<void>();
 
-  private firestoreService = new FirestoreService();
-  private authService = new AuthService();
-  private notificationService = new NotificationService();
-
   milestoneBadges = [
-    { days: 7, badge: '🥉 Bronze Streak' },
-    { days: 30, badge: '🥈 Silver Streak' },
-    { days: 100, badge: '🥇 Gold Streak' },
+    { days: 7,   badge: '🥉 Bronze Streak'    },
+    { days: 30,  badge: '🥈 Silver Streak'    },
+    { days: 100, badge: '🥇 Gold Streak'      },
     { days: 365, badge: '🏆 Legendary Streak' }
   ];
-  motivationalQuotes: string[] = [...QuranQuotes, ...SahihBukhariQuotes, ...SahihMuslimQuotes]; 
-  
+
+  motivationalQuotes: string[] = [
+    ...QuranQuotes,
+    ...SahihBukhariQuotes,
+    ...SahihMuslimQuotes
+  ];
+
   quoteOfTheDay: string = '';
   savedQuotes: string[] = [];
 
   constructor(
-    firestoreService: FirestoreService,
-    authService: AuthService,
-    notificationService: NotificationService,
+    private firestoreService: FirestoreService,
+    private authService: AuthService,
+    private notificationService: NotificationService,
     private http: HttpClient
   ) {
-    this.firestoreService = firestoreService;
-    this.authService = authService;
-    this.notificationService = notificationService;
-    this.quoteOfTheDay = this.motivationalQuotes[Math.floor(Math.random() * this.motivationalQuotes.length)];
+    this.quoteOfTheDay = this.motivationalQuotes[
+      Math.floor(Math.random() * this.motivationalQuotes.length)
+    ];
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadStreaks();
     this.updateHijriDate();
     this.loadSavedQuotes();
   }
 
-  // Load streaks from Firestore with real-time updates
   loadStreaks(): void {
     this.firestoreService.getStreaks()
       .pipe(takeUntil(this.destroy$))
-      .subscribe((streaks) => {
-        this.streaks = streaks.map(streak => ({
-          ...streak,
-          isIndefinite: streak.isIndefinite ?? false
-        }));
+      .subscribe(streaks => {
+        this.streaks = streaks.map(s => ({ ...s, isIndefinite: s.isIndefinite ?? false }));
         this.updateBadges();
       });
-    
-    // Start listening to real-time Firestore updates
     this.firestoreService.loadStreaks();
   }
 
-  // Add new streak to Firestore
   async addStreak(): Promise<void> {
     if (!this.newStreakName.trim()) return;
 
@@ -87,137 +81,99 @@ export class StreakComponent implements OnInit, OnDestroy {
       isIndefinite: this.isIndefinite,
       badge: undefined
     };
-    
+
     try {
       await this.firestoreService.addStreak(newStreak);
-      
-      // Show notification
       this.notificationService.success(`✅ Streak "${this.newStreakName}" added!`);
-      
-      // Reset input fields
       this.newStreakName = '';
       this.newStreakDuration = undefined;
       this.isIndefinite = false;
-      
-      console.log('Streak added to Firestore');
     } catch (error) {
-      console.error('Error adding streak:', error);
       this.notificationService.error('❌ Failed to add streak. Please try again.');
     }
   }
 
-  // Increment streak count
   async incrementStreak(index: number): Promise<void> {
     const streak = this.streaks[index];
     if (!streak.id) return;
 
     const newCount = (streak.count || 0) + 1;
-    
+
     try {
       await this.firestoreService.updateStreak(streak.id, { count: newCount });
-      
-      // Show notification
-      this.notificationService.success(`🎉 ${streak.name}: ${newCount} day(s)!`);
-      
-      // Check for milestone badge
-      const milestones = this.milestoneBadges.filter(m => m.days === newCount);
-      if (milestones.length > 0) {
-        this.notificationService.success(`🏅 ${milestones[0].badge} Unlocked!`);
+      this.notificationService.success(`🔥 ${streak.name}: ${newCount} day(s)!`);
+
+      const milestone = this.milestoneBadges.find(m => m.days === newCount);
+      if (milestone) {
+        this.notificationService.success(`🏅 ${milestone.badge} Unlocked!`);
       }
-      
-      // Check if user has completed the goal
+
       if (streak.duration && newCount >= streak.duration) {
         this.selectedStreakIndex = index;
         this.showGoalModal = true;
-        this.notificationService.success(`🎊 Goal Achieved! You completed ${streak.duration} days!`);
+        this.notificationService.success(`🎊 Goal Achieved! ${streak.duration} days completed!`);
       }
     } catch (error) {
-      console.error('Error incrementing streak:', error);
       this.notificationService.error('❌ Failed to update streak.');
     }
   }
 
-  // Reset streak count
   async resetStreak(index: number): Promise<void> {
     const streak = this.streaks[index];
     if (!streak.id) return;
 
     try {
-      await this.firestoreService.updateStreak(streak.id, { 
-        count: 0, 
-        badge: undefined 
-      });
+      await this.firestoreService.updateStreak(streak.id, { count: 0, badge: undefined });
       this.notificationService.warning(`⚠️ ${streak.name} has been reset.`);
     } catch (error) {
-      console.error('Error resetting streak:', error);
       this.notificationService.error('❌ Failed to reset streak.');
     }
   }
 
-  // Delete streak from Firestore
   async deleteStreak(index: number): Promise<void> {
     const streak = this.streaks[index];
     if (!streak.id) return;
-
     if (!confirm(`Delete "${streak.name}" streak?`)) return;
 
     try {
       await this.firestoreService.deleteStreak(streak.id);
       this.notificationService.info(`🗑️ "${streak.name}" deleted.`);
     } catch (error) {
-      console.error('Error deleting streak:', error);
-      this.notificationService.error('❌ Failed to delete streak. Please try again.');
+      this.notificationService.error('❌ Failed to delete streak.');
     }
   }
 
-  // Update badges for all streaks
   updateBadges(): void {
-    this.streaks.forEach((_, index) => this.updateBadge(index));
+    this.streaks.forEach((_, i) => this.updateBadge(i));
   }
 
-  // Update badge for a single streak
   updateBadge(index: number): void {
     const streak = this.streaks[index];
     const milestone = this.milestoneBadges
-      .slice()
-      .reverse()
+      .slice().reverse()
       .find(m => (streak.count || 0) >= m.days);
 
-    const newBadge = milestone ? milestone.badge : undefined;
-    
-    // Only update if badge changed to avoid unnecessary Firestore calls
+    const newBadge = milestone?.badge;
     if (milestone && streak.badge !== newBadge && streak.id) {
-      this.firestoreService.updateStreak(streak.id, { badge: newBadge }).catch(error => {
-        console.error('Error updating badge:', error);
-      });
+      this.firestoreService.updateStreak(streak.id, { badge: newBadge }).catch(console.error);
     }
   }
 
-  // Extend streak duration
   async extendStreak(): Promise<void> {
     if (this.selectedStreakIndex === null) return;
-
     const streak = this.streaks[this.selectedStreakIndex];
     if (!streak.id) return;
 
-    const additionalDays = prompt('How many days do you want to extend? (Leave blank to make indefinite)');
-
-    if (additionalDays === null) {
-      this.closeGoalModal();
-      return;
-    }
+    const additionalDays = prompt('How many days to extend? (Leave blank for indefinite)');
+    if (additionalDays === null) { this.closeGoalModal(); return; }
 
     try {
       if (additionalDays === '') {
-        await this.firestoreService.updateStreak(streak.id, { 
-          isIndefinite: true, 
-          duration: undefined 
-        });
+        await this.firestoreService.updateStreak(streak.id, { isIndefinite: true, duration: undefined });
       } else {
-        const extraDays = parseInt(additionalDays, 10);
-        if (!isNaN(extraDays) && extraDays > 0) {
-          const newDuration = (streak.duration || 0) + extraDays;
-          await this.firestoreService.updateStreak(streak.id, { duration: newDuration });
+        const extra = parseInt(additionalDays, 10);
+        if (!isNaN(extra) && extra > 0) {
+          await this.firestoreService.updateStreak(streak.id, { duration: (streak.duration || 0) + extra });
         }
       }
       this.closeGoalModal();
@@ -226,10 +182,8 @@ export class StreakComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Stop streak permanently
   async stopStreak(): Promise<void> {
     if (this.selectedStreakIndex === null) return;
-
     const streak = this.streaks[this.selectedStreakIndex];
     if (!streak.id) return;
 
@@ -250,68 +204,47 @@ export class StreakComponent implements OnInit, OnDestroy {
     return this.selectedStreakIndex !== null ? this.streaks[this.selectedStreakIndex] : undefined;
   }
 
-  // Update Hijri date
   updateHijriDate(): void {
+    this.http.get<any>('https://api.aladhan.com/v1/gToH').subscribe({
+      next: (response) => {
+        if (response?.data?.hijri) {
+          const h = response.data.hijri;
+          this.hijriDate = `${h.day} ${h.month.en} ${h.year} AH`;
+        }
+      },
+      error: () => {
+        const t = new Date();
+        this.hijriDate = `${t.getDate()}/${t.getMonth() + 1}/${t.getFullYear()}`;
+      }
+    });
+  }
+
+  async saveQuote(): Promise<void> {
+    if (this.savedQuotes.includes(this.quoteOfTheDay)) return;
+    this.savedQuotes.push(this.quoteOfTheDay);
     try {
-      // Fetch Hijri date from Aladhan API
-      this.http.get<any>('https://api.aladhan.com/v1/gToH')
-        .subscribe(
-          (response: any) => {
-            if (response && response.data && response.data.hijri) {
-              const hijri = response.data.hijri;
-              const day = hijri.day;
-              const month = hijri.month.en;
-              const year = hijri.year;
-              this.hijriDate = `${day} ${month} ${year} AH`;
-            }
-          },
-          (error: any) => {
-            console.error('Error fetching Hijri date:', error);
-            // Fallback to today's date in Gregorian if API fails
-            const today = new Date();
-            this.hijriDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
-          }
-        );
+      await this.firestoreService.saveQuote(this.quoteOfTheDay);
+      this.notificationService.success('⭐ Quote saved!');
     } catch (error) {
-      this.hijriDate = 'Unable to load date';
+      this.notificationService.error('❌ Could not save quote.');
     }
   }
 
-  // Save quote to Firestore
-  async saveQuote(): Promise<void> {
-    if (!this.savedQuotes.includes(this.quoteOfTheDay)) {
-      this.savedQuotes.push(this.quoteOfTheDay);
-      try {
-        await this.firestoreService.saveQuote(this.quoteOfTheDay);
-        this.notificationService.success('⭐ Quote saved!');
-      } catch (error) {
-        console.error('Error saving quote:', error);
-        this.notificationService.error('❌ Could not save quote.');
-      }
-    }
-  }
-  
-  // Load saved quotes from Firestore
   async loadSavedQuotes(): Promise<void> {
     try {
-      const quotes = await this.firestoreService.getSavedQuotes();
-      this.savedQuotes = quotes || [];
-    } catch (error) {
-      console.error('Error loading saved quotes:', error);
+      this.savedQuotes = (await this.firestoreService.getSavedQuotes()) || [];
+    } catch {
       this.savedQuotes = [];
     }
   }
 
-  // Toggle saved quotes view
   toggleSavedQuotes(): void {
     this.showSavedQuotes = !this.showSavedQuotes;
   }
 
-  // Cleanup on component destroy
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
     this.firestoreService.cleanup();
   }
 }
-

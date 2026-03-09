@@ -1,2 +1,387 @@
-/* Auth Component Styles */
-/* Inherits from Tailwind CSS in the HTML */
+/* auth.component.css */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=Lato:wght@300;400;700&family=Noto+Naskh+Arabic:wght@700&display=swap');
+
+/* ─── Theme Variables ─── */
+:host {
+  display: block;
+
+  /* Dark (default) */
+  --bg-root:       #080c14;
+  --bg-card:       #0d1424;
+  --bg-field:      #060a10;
+  --bg-field-focus:#080e1a;
+  --text-primary:  #f5f0e8;
+  --text-secondary:rgba(245,240,232,0.55);
+  --text-muted:    rgba(245,240,232,0.3);
+  --gold:          #d4af37;
+  --gold-light:    #f0d060;
+  --gold-dim:      rgba(212,175,55,0.1);
+  --gold-border:   rgba(212,175,55,0.25);
+  --gold-glow:     rgba(212,175,55,0.35);
+  --field-border:  rgba(212,175,55,0.18);
+  --field-focus:   rgba(212,175,55,0.45);
+  --error-bg:      rgba(239,68,68,0.08);
+  --error-border:  rgba(239,68,68,0.25);
+  --error-text:    #fca5a5;
+  --success-bg:    rgba(74,222,128,0.08);
+  --success-border:rgba(74,222,128,0.25);
+  --success-text:  #86efac;
+  --orb-top:       rgba(212,175,55,0.06);
+  --orb-bottom:    rgba(26,122,74,0.08);
+  --card-shadow:   rgba(0,0,0,0.6);
+}
+
+/* Light mode */
+:host-context(html:not(.dark)) {
+  --bg-root:       #f0ebe0;
+  --bg-card:       #fffdf7;
+  --bg-field:      #faf7ef;
+  --bg-field-focus:#fff;
+  --text-primary:  #1a1208;
+  --text-secondary:rgba(26,18,8,0.6);
+  --text-muted:    rgba(26,18,8,0.38);
+  --gold:          #9a6f10;
+  --gold-light:    #c49020;
+  --gold-dim:      rgba(154,111,16,0.08);
+  --gold-border:   rgba(154,111,16,0.28);
+  --gold-glow:     rgba(154,111,16,0.2);
+  --field-border:  rgba(154,111,16,0.22);
+  --field-focus:   rgba(154,111,16,0.5);
+  --error-bg:      rgba(220,38,38,0.05);
+  --error-border:  rgba(220,38,38,0.2);
+  --error-text:    #b91c1c;
+  --success-bg:    rgba(22,163,74,0.05);
+  --success-border:rgba(22,163,74,0.2);
+  --success-text:  #15803d;
+  --orb-top:       rgba(154,111,16,0.07);
+  --orb-bottom:    rgba(22,101,52,0.06);
+  --card-shadow:   rgba(154,111,16,0.12);
+}
+
+/* ─── Root ─── */
+.auth-root {
+  position: relative;
+  min-height: 100vh;
+  background: var(--bg-root);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow: hidden;
+  font-family: 'Lato', sans-serif;
+  transition: background 0.3s ease;
+}
+
+/* ─── BG Pattern ─── */
+.arabesque-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.arabesque-svg { width: 100%; height: 100%; }
+
+/* Ambient orbs */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+.orb-top {
+  width: 500px; height: 400px;
+  top: -150px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--orb-top);
+}
+.orb-bottom {
+  width: 400px; height: 400px;
+  bottom: -150px; right: -100px;
+  background: var(--orb-bottom);
+}
+
+/* ─── Card ─── */
+.auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: 24px;
+  padding: 36px 32px 28px;
+  box-shadow: 0 24px 80px var(--card-shadow), 0 0 0 1px var(--gold-dim);
+  animation: cardReveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+@keyframes cardReveal {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ─── Brand ─── */
+.auth-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.brand-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 20px var(--gold-glow);
+}
+.brand-icon svg { width: 32px; height: 32px; }
+.brand-text { display: flex; flex-direction: column; gap: 1px; }
+.brand-arabic {
+  font-family: 'Noto Naskh Arabic', serif;
+  font-size: 1.4rem;
+  color: var(--gold);
+  line-height: 1;
+}
+.brand-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* ─── Ornament ─── */
+.ornament-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.orn-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold-border));
+}
+.orn-line:last-child {
+  background: linear-gradient(to left, transparent, var(--gold-border));
+}
+.orn-diamond { color: var(--gold); font-size: 0.55rem; opacity: 0.7; }
+
+/* ─── Heading ─── */
+.auth-heading { text-align: center; margin-bottom: 20px; }
+.auth-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+  letter-spacing: 0.04em;
+  transition: color 0.3s;
+}
+.auth-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* ─── Alerts ─── */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin-bottom: 14px;
+  animation: alertIn 0.3s ease both;
+}
+@keyframes alertIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
+.alert svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; margin-top: 1px; }
+.alert-error {
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error-text);
+}
+.alert-success {
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  color: var(--success-text);
+}
+
+/* ─── Form ─── */
+.auth-form { display: flex; flex-direction: column; gap: 14px; }
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: fieldIn 0.4s ease both;
+  animation-delay: var(--fd, 0s);
+}
+@keyframes fieldIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:none} }
+
+.field-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
+.field-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.field-icon {
+  position: absolute;
+  left: 12px;
+  width: 15px; height: 15px;
+  fill: var(--text-muted);
+  pointer-events: none;
+  transition: fill 0.2s;
+}
+.field-toggle {
+  position: absolute;
+  right: 10px;
+  width: 28px; height: 28px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+  padding: 0;
+}
+.field-toggle svg { width: 14px; height: 14px; fill: currentColor; }
+.field-toggle:hover { color: var(--gold); background: var(--gold-dim); }
+
+.field-input {
+  width: 100%;
+  padding: 11px 38px 11px 36px;
+  background: var(--bg-field);
+  border: 1px solid var(--field-border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: 'Lato', sans-serif;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+.field-input::placeholder { color: var(--text-muted); }
+.field-input:focus {
+  border-color: var(--field-focus);
+  background: var(--bg-field-focus);
+  box-shadow: 0 0 0 3px var(--gold-dim);
+}
+.field-input:focus + .field-icon,
+.field-wrap:focus-within .field-icon { fill: var(--gold); }
+
+/* ─── Submit button ─── */
+.btn-submit {
+  width: 100%;
+  padding: 13px;
+  margin-top: 4px;
+  background: linear-gradient(135deg, #a07820, var(--gold), #a07820);
+  background-size: 200% 100%;
+  border: none;
+  border-radius: 11px;
+  color: #080c14;
+  font-family: 'Cinzel', serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 24px var(--gold-glow);
+  transition: background-position 0.4s, box-shadow 0.2s, transform 0.15s, opacity 0.2s;
+  animation: fieldIn 0.4s ease both;
+  animation-delay: var(--fd, 0s);
+}
+.btn-submit svg { width: 14px; height: 14px; fill: currentColor; }
+.btn-submit:hover:not(:disabled) {
+  background-position: right;
+  box-shadow: 0 6px 32px var(--gold-glow);
+  transform: translateY(-1px);
+}
+.btn-submit:active:not(:disabled) { transform: scale(0.98); }
+.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Loading dots animation */
+.loading-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.loading-dots span {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #080c14;
+  animation: dotPulse 1.2s ease-in-out infinite;
+}
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotPulse {
+  0%,80%,100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* ─── Toggle ─── */
+.auth-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 18px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+.toggle-btn:hover { color: var(--gold-light); background: var(--gold-dim); }
+
+/* ─── Footer ─── */
+.auth-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.auth-footer svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+/* ─── Light mode card refinement ─── */
+:host-context(html:not(.dark)) .auth-card {
+  box-shadow: 0 8px 40px var(--card-shadow), 0 0 0 1px var(--gold-dim);
+}
+:host-context(html:not(.dark)) .btn-submit {
+  background: linear-gradient(135deg, #7a5510, #c49020, #7a5510);
+  background-size: 200% 100%;
+  color: #fffdf7;
+}
+:host-context(html:not(.dark)) .loading-dots span { background: #fffdf7; }

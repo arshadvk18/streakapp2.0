@@ -1,58 +1,153 @@
-<div class="min-h-screen bg-gradient-to-br from-green-100 to-green-300 flex flex-col items-center py-8 px-4 sm:px-6">
-    <h1 class="text-4xl sm:text-5xl font-extrabold text-green-800 text-center drop-shadow-xl mb-6 sm:mb-8">
-        🕌 Namaz Times
+<!-- namaz-times.component.html -->
+<!-- namaz-times.component.html -->
+<div class="namaz-root">
+
+  <!-- Arabesque BG pattern -->
+  <div class="arabesque-bg" aria-hidden="true">
+    <svg class="arabesque-svg" viewBox="0 0 800 800" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <pattern id="geo2" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+          <path d="M40 0 L80 20 L80 60 L40 80 L0 60 L0 20 Z" fill="none" stroke="rgba(212,175,55,0.07)" stroke-width="0.8"/>
+          <circle cx="40" cy="40" r="3" fill="none" stroke="rgba(212,175,55,0.05)" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#geo2)"/>
+    </svg>
+  </div>
+
+  <!-- Header -->
+  <header class="namaz-header">
+    <div class="header-ornament">
+      <span class="ornament-line"></span>
+      <span class="ornament-diamond">◆</span>
+      <span class="ornament-line"></span>
+    </div>
+    <h1 class="namaz-title">
+      <span class="title-arabic">مَوَاقِيتُ الصَّلَاة</span>
+      <span class="title-eng">Prayer Times</span>
     </h1>
-
-    <!-- Hijri Date Display -->
-    <div class="text-gray-800 font-semibold text-base sm:text-lg">
-        📅 Hijri Date: <span class="text-green-700 font-bold">{{ hijriDate }}</span>
+    <div class="namaz-meta">
+      <div class="hijri-badge">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM8 4v4l3 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        {{ hijriDate }}
+      </div>
+      <div *ngIf="upcomingPrayer" class="next-prayer-badge">
+        <span class="next-dot"></span>
+        Next: <strong>{{ upcomingPrayer }}</strong>
+      </div>
     </div>
-    <!-- Upcoming Prayer Indicator -->
-    <div *ngIf="upcomingPrayer" class="mt-8 text-center text-lg font-semibold text-green-900 mb-4">
-        🌟 Next Prayer: <span class="text-yellow-500 font-bold">{{ upcomingPrayer }}</span>
+  </header>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-ring">
+      <svg viewBox="0 0 50 50">
+        <circle cx="25" cy="25" r="20" fill="none" stroke="rgba(212,175,55,0.15)" stroke-width="2"/>
+        <circle cx="25" cy="25" r="20" fill="none" stroke="#d4af37" stroke-width="2"
+          stroke-dasharray="31.4 94.2" stroke-linecap="round">
+          <animateTransform attributeName="transform" type="rotate" dur="1.2s" repeatCount="indefinite" from="0 25 25" to="360 25 25"/>
+        </circle>
+      </svg>
     </div>
-    <!-- Show loading state -->
-    <div *ngIf="loading" class="text-center text-lg font-medium text-green-900 animate-pulse">
-        ⏳ Loading prayer times...
-    </div>
+    <p class="loading-text">Calculating prayer times…</p>
+  </div>
 
-    <!-- Display prayer times if available -->
-    <div *ngIf="prayerTimes" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full max-w-4xl">
-        <div 
-            class="bg-gradient-to-br from-green-700 to-green-900 p-5 rounded-xl shadow-lg text-center transform transition duration-300 hover:scale-105"
-            [ngClass]="{ 'ring-4 ring-yellow-400 shadow-2xl': upcomingPrayer === 'Fajr' }">
-            <h3 class="text-xl font-bold text-white">Fajr</h3>
-            <p class="text-lg text-gray-100 mt-2">{{ prayerTimes.Fajr }}</p>
-        </div>
+  <!-- Prayer cards grid -->
+  <div *ngIf="prayerTimes" class="prayer-grid">
 
-        <div 
-            class="bg-gradient-to-br from-green-700 to-green-900 p-5 rounded-xl shadow-lg text-center transform transition duration-300 hover:scale-105"
-            [ngClass]="{ 'ring-4 ring-yellow-400 shadow-2xl': upcomingPrayer === 'Dhuhr' }">
-            <h3 class="text-xl font-bold text-white">Dhuhr</h3>
-            <p class="text-lg text-gray-100 mt-2">{{ prayerTimes.Dhuhr }}</p>
-        </div>
-
-        <div 
-            class="bg-gradient-to-br from-green-700 to-green-900 p-5 rounded-xl shadow-lg text-center transform transition duration-300 hover:scale-105"
-            [ngClass]="{ 'ring-4 ring-yellow-400 shadow-2xl': upcomingPrayer === 'Asr' }">
-            <h3 class="text-xl font-bold text-white">Asr</h3>
-            <p class="text-lg text-gray-100 mt-2">{{ prayerTimes.Asr }}</p>
-        </div>
-
-        <div 
-            class="bg-gradient-to-br from-green-700 to-green-900 p-5 rounded-xl shadow-lg text-center transform transition duration-300 hover:scale-105"
-            [ngClass]="{ 'ring-4 ring-yellow-400 shadow-2xl': upcomingPrayer === 'Maghrib' }">
-            <h3 class="text-xl font-bold text-white">Maghrib</h3>
-            <p class="text-lg text-gray-100 mt-2">{{ prayerTimes.Maghrib }}</p>
-        </div>
-
-        <div 
-            class="bg-gradient-to-br from-green-700 to-green-900 p-5 rounded-xl shadow-lg text-center transform transition duration-300 hover:scale-105"
-            [ngClass]="{ 'ring-4 ring-yellow-400 shadow-2xl': upcomingPrayer === 'Isha' }">
-            <h3 class="text-xl font-bold text-white">Isha</h3>
-            <p class="text-lg text-gray-100 mt-2">{{ prayerTimes.Isha }}</p>
-        </div>
+    <!-- Fajr -->
+    <div class="prayer-card" [class.active]="upcomingPrayer === 'Fajr'" style="--i:0">
+      <div class="prayer-card-bg"></div>
+      <div class="prayer-symbol">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 3v1M12 20v1M4.22 4.22l.7.7M18.36 18.36l.7.7M3 12H2M22 12h-1M4.22 19.78l.7-.7M18.36 5.64l.7-.7"/>
+          <path d="M12 6a6 6 0 010 12" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="prayer-info">
+        <span class="prayer-arabic">الفجر</span>
+        <span class="prayer-name">Fajr</span>
+      </div>
+      <div class="prayer-time">{{ prayerTimes.Fajr }}</div>
+      <div *ngIf="upcomingPrayer === 'Fajr'" class="active-indicator">
+        <span class="active-dot"></span>Up Next
+      </div>
     </div>
 
-    
+    <!-- Dhuhr -->
+    <div class="prayer-card" [class.active]="upcomingPrayer === 'Dhuhr'" style="--i:1">
+      <div class="prayer-card-bg"></div>
+      <div class="prayer-symbol">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M16.66 16.66l1.41 1.41M4.93 19.07l1.41-1.41M16.66 7.34l1.41-1.41"/>
+        </svg>
+      </div>
+      <div class="prayer-info">
+        <span class="prayer-arabic">الظهر</span>
+        <span class="prayer-name">Dhuhr</span>
+      </div>
+      <div class="prayer-time">{{ prayerTimes.Dhuhr }}</div>
+      <div *ngIf="upcomingPrayer === 'Dhuhr'" class="active-indicator">
+        <span class="active-dot"></span>Up Next
+      </div>
+    </div>
+
+    <!-- Asr -->
+    <div class="prayer-card" [class.active]="upcomingPrayer === 'Asr'" style="--i:2">
+      <div class="prayer-card-bg"></div>
+      <div class="prayer-symbol">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M17 12a5 5 0 11-10 0 5 5 0 0110 0z"/><path d="M5 12H3M21 12h-2M7.05 7.05L5.64 5.64M18.36 18.36l-1.41-1.41M12 5V3M12 21v-2M7.05 16.95l-1.41 1.41M18.36 5.64l-1.41 1.41"/>
+          <path d="M3 17h18" stroke-width="1"/>
+        </svg>
+      </div>
+      <div class="prayer-info">
+        <span class="prayer-arabic">العصر</span>
+        <span class="prayer-name">Asr</span>
+      </div>
+      <div class="prayer-time">{{ prayerTimes.Asr }}</div>
+      <div *ngIf="upcomingPrayer === 'Asr'" class="active-indicator">
+        <span class="active-dot"></span>Up Next
+      </div>
+    </div>
+
+    <!-- Maghrib -->
+    <div class="prayer-card" [class.active]="upcomingPrayer === 'Maghrib'" style="--i:3">
+      <div class="prayer-card-bg"></div>
+      <div class="prayer-symbol">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+          <path d="M3 18h18" stroke-width="1"/>
+        </svg>
+      </div>
+      <div class="prayer-info">
+        <span class="prayer-arabic">المغرب</span>
+        <span class="prayer-name">Maghrib</span>
+      </div>
+      <div class="prayer-time">{{ prayerTimes.Maghrib }}</div>
+      <div *ngIf="upcomingPrayer === 'Maghrib'" class="active-indicator">
+        <span class="active-dot"></span>Up Next
+      </div>
+    </div>
+
+    <!-- Isha -->
+    <div class="prayer-card wide" [class.active]="upcomingPrayer === 'Isha'" style="--i:4">
+      <div class="prayer-card-bg"></div>
+      <div class="prayer-symbol">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"/>
+          <path d="M17 3l1.5 1.5L17 6M17 3v3M20 5.5h-3"/>
+        </svg>
+      </div>
+      <div class="prayer-info">
+        <span class="prayer-arabic">العشاء</span>
+        <span class="prayer-name">Isha</span>
+      </div>
+      <div class="prayer-time">{{ prayerTimes.Isha }}</div>
+      <div *ngIf="upcomingPrayer === 'Isha'" class="active-indicator">
+        <span class="active-dot"></span>Up Next
+      </div>
+    </div>
+
+  </div>
 </div>
