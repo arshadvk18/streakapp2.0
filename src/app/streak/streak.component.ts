@@ -277,19 +277,28 @@ export class StreakComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Save quote to local storage
-  saveQuote(): void {
+  // Save quote to Firestore
+  async saveQuote(): Promise<void> {
     if (!this.savedQuotes.includes(this.quoteOfTheDay)) {
       this.savedQuotes.push(this.quoteOfTheDay);
-      localStorage.setItem('savedQuotes', JSON.stringify(this.savedQuotes));
+      try {
+        await this.firestoreService.saveQuote(this.quoteOfTheDay);
+        this.notificationService.success('⭐ Quote saved!');
+      } catch (error) {
+        console.error('Error saving quote:', error);
+        this.notificationService.error('❌ Could not save quote.');
+      }
     }
   }
   
-  // Load saved quotes from local storage
-  loadSavedQuotes(): void {
-    const storedQuotes = localStorage.getItem('savedQuotes');
-    if (storedQuotes) {
-      this.savedQuotes = JSON.parse(storedQuotes);
+  // Load saved quotes from Firestore
+  async loadSavedQuotes(): Promise<void> {
+    try {
+      const quotes = await this.firestoreService.getSavedQuotes();
+      this.savedQuotes = quotes || [];
+    } catch (error) {
+      console.error('Error loading saved quotes:', error);
+      this.savedQuotes = [];
     }
   }
 

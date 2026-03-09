@@ -10,6 +10,7 @@ import {
   query,
   where,
   getDocs,
+  getDoc,
   onSnapshot,
   Unsubscribe,
   writeBatch,
@@ -206,6 +207,100 @@ export class FirestoreService {
       return snapshot.docs[0]?.data();
     } catch (error) {
       console.error('Error getting user profile:', error);
+      throw error;
+    }
+  }
+
+  // Save quote to Firestore
+  async saveQuote(quote: string): Promise<void> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      const userDocRef = doc(this.firestore, 'users', user.uid);
+      const userSnapshot = await getDoc(userDocRef);
+
+      if (userSnapshot.exists()) {
+        const userData = userSnapshot.data();
+        const existingQuotes = userData['savedQuotes'] || [];
+        
+        if (!existingQuotes.includes(quote)) {
+          const updatedQuotes = [...existingQuotes, quote];
+          await updateDoc(userDocRef, { savedQuotes: updatedQuotes });
+        }
+      }
+    } catch (error) {
+      console.error('Error saving quote:', error);
+      throw error;
+    }
+  }
+
+  // Add savedQuotes array field with new quote
+  async addSavedQuote(quote: string): Promise<void> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      const userDocRef = doc(this.firestore, 'users', user.uid);
+      const userSnapshot = await getDocs(
+        query(collection(this.firestore, 'users'), where('__name__', '==', user.uid))
+      );
+
+      if (userSnapshot.docs.length > 0) {
+        const userData = userSnapshot.docs[0].data();
+        const existingQuotes = userData['savedQuotes'] || [];
+        
+        if (!existingQuotes.includes(quote)) {
+          const updatedQuotes = [...existingQuotes, quote];
+          await updateDoc(userDocRef, { savedQuotes: updatedQuotes });
+        }
+      }
+    } catch (error) {
+      console.error('Error adding saved quote:', error);
+      throw error;
+    }
+  }
+
+  // Get saved quotes from Firestore
+  async getSavedQuotes(): Promise<string[]> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      const userSnapshot = await getDocs(
+        query(collection(this.firestore, 'users'), where('__name__', '==', user.uid))
+      );
+
+      if (userSnapshot.docs.length > 0) {
+        const userData = userSnapshot.docs[0].data();
+        return userData['savedQuotes'] || [];
+      }
+      return [];
+    } catch (error) {
+      console.error('Error getting saved quotes:', error);
+      throw error;
+    }
+  }
+
+  // Delete saved quote from Firestore
+  async deleteSavedQuote(quote: string): Promise<void> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      const userDocRef = doc(this.firestore, 'users', user.uid);
+      const userSnapshot = await getDocs(
+        query(collection(this.firestore, 'users'), where('__name__', '==', user.uid))
+      );
+
+      if (userSnapshot.docs.length > 0) {
+        const userData = userSnapshot.docs[0].data();
+        const existingQuotes = userData['savedQuotes'] || [];
+        const updatedQuotes = existingQuotes.filter((q: string) => q !== quote);
+        await updateDoc(userDocRef, { savedQuotes: updatedQuotes });
+      }
+    } catch (error) {
+      console.error('Error deleting saved quote:', error);
       throw error;
     }
   }
