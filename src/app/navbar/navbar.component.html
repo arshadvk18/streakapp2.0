@@ -16,11 +16,18 @@
         </button>
   
         <!-- Desktop Menu -->
-        <ul class="hidden sm:flex space-x-6">
-          <li><a routerLink="home" routerLinkActive="font-bold text-yellow-300" class="hover:text-yellow-400 transition">Home</a></li>
+        <ul class="hidden sm:flex space-x-6 items-center">
           <li><a routerLink="/streak" routerLinkActive="font-bold text-yellow-300" class="hover:text-yellow-400 transition">My Streaks</a></li>
-          <li><a routerLink="namaztimings" routerLinkActive="font-bold text-yellow-300" class="hover:text-yellow-400 transition">Namaz Time</a></li>
-          <li><a routerLink="settings" routerLinkActive="font-bold text-yellow-300" class="hover:text-yellow-400 transition">Settings</a></li>
+          <li><a routerLink="/namaztimings" routerLinkActive="font-bold text-yellow-300" class="hover:text-yellow-400 transition">Namaz Time</a></li>
+          <li><a routerLink="/settings" routerLinkActive="font-bold text-yellow-300" class="hover:text-yellow-400 transition">Settings</a></li>
+          <li>
+            <button 
+              (click)="logout()"
+              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold"
+            >
+              Logout
+            </button>
+          </li>
         </ul>
       </div>
     </div>
@@ -28,14 +35,20 @@
     <!-- Mobile Menu -->
     <div *ngIf="menuOpen" class="sm:hidden bg-green-800">
       <ul class="flex flex-col items-center py-4 space-y-3">
-        <li><a routerLink="home" routerLinkActive="font-bold text-yellow-300" class="block py-2 px-4 hover:text-yellow-400 transition">Home</a></li>
-        <li><a routerLink="streak" routerLinkActive="font-bold text-yellow-300" class="block py-2 px-4 hover:text-yellow-400 transition">My Streaks</a></li>
-        <li><a routerLink="namaztimings" routerLinkActive="font-bold text-yellow-300" class="block py-2 px-4 hover:text-yellow-400 transition">Namaz Time</a></li>
-        <li><a routerLink="settings" routerLinkActive="font-bold text-yellow-300" class="block py-2 px-4 hover:text-yellow-400 transition">Settings</a></li>
+        <li><a routerLink="/streak" routerLinkActive="font-bold text-yellow-300" class="block py-2 px-4 hover:text-yellow-400 transition">My Streaks</a></li>
+        <li><a routerLink="/namaztimings" routerLinkActive="font-bold text-yellow-300" class="block py-2 px-4 hover:text-yellow-400 transition">Namaz Time</a></li>
+        <li><a routerLink="/settings" routerLinkActive="font-bold text-yellow-300" class="block py-2 px-4 hover:text-yellow-400 transition">Settings</a></li>
+        <li>
+          <button 
+            (click)="logout()"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold w-full"
+          >
+            Logout
+          </button>
+        </li>
       </ul>
     </div>
   </nav>
   
   <!-- Add spacing below navbar -->
   <div class="pt-16"></div>
-  
