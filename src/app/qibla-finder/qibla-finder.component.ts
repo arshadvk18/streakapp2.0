@@ -189,8 +189,6 @@ import { Subject, takeUntil } from 'rxjs';
     </div>
   `,
   styles: [`
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Mono:wght@300;400;700&display=swap');
-
     :host { display: block; width: 100%; height: 100vh; }
 
     /* ─── Root ─── */

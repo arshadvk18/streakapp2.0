@@ -38,8 +38,6 @@ import { NotificationService, Notification } from '../services/notification.serv
     </div>
   `,
   styles: [`
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@400;700&display=swap');
-
     :host { display: block; }
 
     .notif-host {

@@ -82,8 +82,7 @@ import { takeUntil } from 'rxjs/operators';
     </div>
   `,
   styles: [`
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap');
-
+    
     :host { display: block; width: 100%; max-width: 560px; }
 
     .stats-wrap {
