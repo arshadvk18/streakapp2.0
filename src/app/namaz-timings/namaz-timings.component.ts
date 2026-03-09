@@ -1,100 +1,178 @@
-import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-interface PrayerTimes {
-  Fajr: string;
-  Dhuhr: string;
-  Asr: string;
-  Maghrib: string;
-  Isha: string;
-}
+import { PrayerTimesService, PrayerTimes } from '../services/prayer-times.service';
+import { Subject, takeUntil } from 'rxjs';
+import { NotificationService } from '../services/notification.service';
 
 @Component({
   selector: 'app-namaz-timings',
-  templateUrl: './namaz-timings.component.html',
-  styleUrls: ['./namaz-timings.component.css'],
-  imports: [CommonModule]
-})
-export class NamazTimingsComponent implements OnInit {
-  prayerTimes: PrayerTimes | null = null;
-  hijriDate: string = '';
-  loading: boolean = false;
-  upcomingPrayer: string | null = null;
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <div class="w-full p-4 md:p-6">
+      <div class="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900 dark:to-teal-900 rounded-lg shadow-md p-4 md:p-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl md:text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+            <span class="text-2xl">🕌</span>
+            Prayer Times
+          </h2>
+          <button 
+            (click)="refreshTimes()" 
+            [disabled]="isLoading"
+            class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            {{ isLoading ? '⏳ Loading...' : '🔄 Refresh' }}
+          </button>
+        </div>
 
-  constructor(private http: HttpClient) {}
+        <!-- Location Info -->
+        <div class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+          📍 Using your current location
+          <button 
+            (click)="openLocationSettings()"
+            class="ml-2 text-emerald-500 hover:text-emerald-600 underline"
+          >
+            Change
+          </button>
+        </div>
+
+        <!-- Next Prayer -->
+        <div *ngIf="prayerTimes" class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-emerald-400 dark:border-emerald-500">
+          <p class="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+            {{ getNextPrayerDisplay() }}
+          </p>
+        </div>
+
+        <!-- Prayer Times Grid -->
+        <div *ngIf="prayerTimes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div *ngFor="let prayer of prayerList" 
+               class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover:shadow-lg transition-shadow">
+            <p class="text-sm text-gray-600 dark:text-gray-400 font-semibold mb-2">{{ prayer.name }}</p>
+            <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ prayer.time }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <span *ngIf="!isCompleted(prayer.name)" class="text-emerald-500">⏳ Upcoming</span>
+              <span *ngIf="isCompleted(prayer.name)" class="text-green-500">✓ Completed</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- No Data State -->
+        <div *ngIf="!prayerTimes && !isLoading" class="text-center py-8">
+          <p class="text-gray-600 dark:text-gray-400 mb-4">Enable location to see prayer times</p>
+          <button 
+            (click)="enableLocation()"
+            class="px-6 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition"
+          >
+            📍 Enable Location
+          </button>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [`
+    :host {
+      display: block;
+    }
+  `]
+})
+export class NamazTimingsComponent implements OnInit, OnDestroy {
+  private prayerTimesService = inject(PrayerTimesService);
+  private notificationService = inject(NotificationService);
+  private destroy$ = new Subject<void>();
+
+  prayerTimes: any = null;
+  isLoading = false;
+  prayerList: any[] = [];
+
+  private readonly prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
   ngOnInit(): void {
-    this.getUserLocation();
-    setInterval(() => this.highlightUpcomingPrayer(), 60 * 1000); // Update every minute
+    this.prayerTimesService.getPrayerTimes()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(times => {
+        this.prayerTimes = times;
+        if (times) {
+          this.buildPrayerList();
+        }
+      });
+
+    this.prayerTimesService.getLoading()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(loading => this.isLoading = loading);
+
+    this.getLocationAndFetchPrayerTimes();
   }
 
-  getUserLocation(): void {
-    if (navigator.geolocation) {
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private getLocationAndFetchPrayerTimes(): void {
+    if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          this.fetchPrayerTimes(lat, lon);
+          const lng = position.coords.longitude;
+          this.prayerTimesService.startAutoRefresh(lat, lng);
         },
-        () => {
-          alert('Location access denied! Please enable location.');
+        (error) => {
+          console.log('Location access denied:', error);
+          // Default to Mecca if location not available
+          this.prayerTimesService.startAutoRefresh(21.4225, 39.8262);
         }
       );
-    } else {
-      alert('Geolocation is not supported by this browser.');
     }
   }
 
-  fetchPrayerTimes(lat: number, lon: number): void {
-    this.loading = true;
-    this.http.get<any>(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=2`)
-      .subscribe(response => {
-        this.prayerTimes = response.data.timings;
-        this.hijriDate = `${response.data.date.hijri.day} ${response.data.date.hijri.month.en} ${response.data.date.hijri.year}`;
-        this.loading = false;
-
-        this.highlightUpcomingPrayer(); // Highlight as soon as timings load
-      }, error => {
-        console.error('Error fetching prayer times:', error);
-        this.loading = false;
-      });
+  private buildPrayerList(): void {
+    this.prayerList = [
+      { name: 'Fajr', time: this.prayerTimes.Fajr },
+      { name: 'Dhuhr', time: this.prayerTimes.Dhuhr },
+      { name: 'Asr', time: this.prayerTimes.Asr },
+      { name: 'Maghrib', time: this.prayerTimes.Maghrib },
+      { name: 'Isha', time: this.prayerTimes.Isha }
+    ];
   }
 
-  highlightUpcomingPrayer(): void {
-    if (!this.prayerTimes) return;
+  getNextPrayerDisplay(): string {
+    if (!this.prayerTimes) return '';
+    return this.prayerTimesService.getNextPrayer(this.prayerTimes);
+  }
 
+  isCompleted(prayerName: string): boolean {
+    // Simple check - in a real app, you'd track prayer completion
     const now = new Date();
-    const currentTime = this.formatTime(now);
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    return this.prayerTimes[prayerName] < currentTime;
+  }
 
-    const timings = {
-      Fajr: this.prayerTimes.Fajr,
-      Dhuhr: this.prayerTimes.Dhuhr,
-      Asr: this.prayerTimes.Asr,
-      Maghrib: this.prayerTimes.Maghrib,
-      Isha: this.prayerTimes.Isha
-    };
+  refreshTimes(): void {
+    this.getLocationAndFetchPrayerTimes();
+    this.notificationService.success('Prayer times refreshed!');
+  }
 
-    const sortedTimings = Object.entries(timings).sort(([_, time1], [__, time2]) => 
-      this.convertToMinutes(time1) - this.convertToMinutes(time2)
-    );
-
-    for (const [prayer, time] of sortedTimings) {
-      if (currentTime < this.convertToMinutes(time)) {
-        this.upcomingPrayer = prayer;
-        return;
-      }
+  enableLocation(): void {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          this.prayerTimesService.fetchPrayerTimes(lat, lng);
+          this.notificationService.success('Location enabled!');
+        },
+        (error) => {
+          console.error('Location error:', error);
+          this.notificationService.error('Could not access location. Using default location.');
+          // Use Mecca as default
+          this.prayerTimesService.fetchPrayerTimes(21.4225, 39.8262);
+        }
+      );
     }
-
-    this.upcomingPrayer = 'Fajr (Next Day)'; // Handle post-Isha scenario
   }
 
-  formatTime(date: Date): number {
-    return date.getHours() * 60 + date.getMinutes();
-  }
-
-  convertToMinutes(time: string): number {
-    const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + minutes;
+  openLocationSettings(): void {
+    this.enableLocation();
   }
 }

@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { ThemeService } from '../services/theme.service';
 
 @Component({
   selector: 'app-navbar',
@@ -9,16 +10,26 @@ import { AuthService } from '../services/auth.service';
   imports:[CommonModule,RouterLink],
   standalone:true
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit {
   menuOpen = false;
+  isDarkMode = false;
 
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {}
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private themeService = inject(ThemeService);
+
+  ngOnInit(): void {
+    this.themeService.getTheme().subscribe(isDark => {
+      this.isDarkMode = isDark;
+    });
+  }
 
   toggleMenu() {
     this.menuOpen = !this.menuOpen;
+  }
+
+  toggleDarkMode() {
+    this.themeService.toggleTheme();
   }
 
   async logout() {

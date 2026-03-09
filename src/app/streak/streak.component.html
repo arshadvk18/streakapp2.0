@@ -1,17 +1,20 @@
-<div class="min-h-screen bg-gradient-to-br from-green-100 to-green-300 flex flex-col items-center py-8 px-4 sm:px-6">
+<div class="min-h-screen bg-gradient-to-br from-green-100 to-green-300 dark:from-green-900 dark:to-green-800 flex flex-col items-center py-8 px-4 sm:px-6">
     <!-- App Title -->
-    <h1 class="text-4xl sm:text-5xl font-extrabold text-green-800 text-center drop-shadow-xl mb-8">
+    <h1 class="text-4xl sm:text-5xl font-extrabold text-green-800 dark:text-green-100 text-center drop-shadow-xl mb-8">
         🕌 Islamic Streak Tracker
     </h1>
 
+    <!-- Stats Component -->
+    <app-stats></app-stats>
+
     <!-- Hijri Date Display -->
-    <div class="text-gray-800 font-semibold text-base sm:text-lg mb-4">
-        📅 Hijri Date: <span class="text-green-600">{{ hijriDate }}</span>
+    <div class="text-gray-800 dark:text-gray-200 font-semibold text-base sm:text-lg mb-4">
+        📅 Hijri Date: <span class="text-green-600 dark:text-green-400">{{ hijriDate }}</span>
     </div>
 
     <!-- Motivational Quote Display -->
-    <div *ngIf="!showSavedQuotes" class="bg-white p-4 rounded-xl shadow-md border border-gray-300 text-center w-full max-w-xs sm:max-w-md">
-        <p class="text-gray-900 text-sm sm:text-lg font-semibold italic">
+    <div *ngIf="!showSavedQuotes" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border border-gray-300 dark:border-gray-600 text-center w-full max-w-xs sm:max-w-md">
+        <p class="text-gray-900 dark:text-gray-100 text-sm sm:text-lg font-semibold italic">
             "{{ quoteOfTheDay }}"
         </p>
         <div class="mt-2 flex justify-center gap-2 flex-wrap">
@@ -30,17 +33,17 @@
         </div>
     </div>
     
-    <div *ngIf="showSavedQuotes" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-300 text-center w-full max-w-xs sm:max-w-md">
+    <div *ngIf="showSavedQuotes" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-300 dark:border-gray-600 text-center w-full max-w-xs sm:max-w-md">
         <!-- Saved Quotes Header -->
-        <div class="px-4 py-3 bg-gray-50 rounded-lg shadow-inner border border-gray-200">
-            <h2 class="text-gray-900 text-sm sm:text-lg font-semibold italic">
+        <div class="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner border border-gray-200 dark:border-gray-600">
+            <h2 class="text-gray-900 dark:text-gray-100 text-sm sm:text-lg font-semibold italic">
                 ⭐ Saved Quotes
             </h2>
         </div>
     
         <!-- Saved Quotes List -->
-        <ul class="mt-4 space-y-3 px-4 py-3 bg-gray-50 rounded-lg shadow-inner border border-gray-200">
-            <li *ngFor="let quote of savedQuotes" class="text-gray-900 text-sm sm:text-lg font-semibold italic">
+        <ul class="mt-4 space-y-3 px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner border border-gray-200 dark:border-gray-600">
+            <li *ngFor="let quote of savedQuotes" class="text-gray-900 dark:text-gray-100 text-sm sm:text-lg font-semibold italic">
                 "{{ quote }}"
             </li>
         </ul>

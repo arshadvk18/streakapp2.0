@@ -1,4 +1,4 @@
-<nav class="bg-green-700 text-white w-full fixed top-0 z-50 shadow-lg">
+<nav class="bg-green-700 text-white w-full fixed top-0 z-50 shadow-lg dark:bg-green-900">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center py-4">
         <!-- App Title -->
@@ -7,19 +7,32 @@
         </a>
   
         <!-- Mobile Menu Button -->
-        <button (click)="toggleMenu()" class="sm:hidden focus:outline-none">
-          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 6h16M4 12h16m-7 6h7"></path>
-          </svg>
-        </button>
+        <div class="sm:hidden flex items-center gap-4">
+          <button (click)="toggleDarkMode()" class="focus:outline-none">
+            <span class="text-xl">{{ isDarkMode ? '☀️' : '🌙' }}</span>
+          </button>
+          <button (click)="toggleMenu()" class="focus:outline-none">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 6h16M4 12h16m-7 6h7"></path>
+            </svg>
+          </button>
+        </div>
   
         <!-- Desktop Menu -->
         <ul class="hidden sm:flex space-x-6 items-center">
           <li><a routerLink="/streak" routerLinkActive="font-bold text-yellow-300" class="hover:text-yellow-400 transition">My Streaks</a></li>
           <li><a routerLink="/namaztimings" routerLinkActive="font-bold text-yellow-300" class="hover:text-yellow-400 transition">Namaz Time</a></li>
           <li><a routerLink="/settings" routerLinkActive="font-bold text-yellow-300" class="hover:text-yellow-400 transition">Settings</a></li>
+          <li>
+            <button 
+              (click)="toggleDarkMode()"
+              class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition text-xl"
+            >
+              {{ isDarkMode ? '☀️' : '🌙' }}
+            </button>
+          </li>
           <li>
             <button 
               (click)="logout()"
@@ -33,7 +46,7 @@
     </div>
   
     <!-- Mobile Menu -->
-    <div *ngIf="menuOpen" class="sm:hidden bg-green-800">
+    <div *ngIf="menuOpen" class="sm:hidden bg-green-800 dark:bg-green-950">
       <ul class="flex flex-col items-center py-4 space-y-3">
         <li><a routerLink="/streak" routerLinkActive="font-bold text-yellow-300" class="block py-2 px-4 hover:text-yellow-400 transition">My Streaks</a></li>
         <li><a routerLink="/namaztimings" routerLinkActive="font-bold text-yellow-300" class="block py-2 px-4 hover:text-yellow-400 transition">Namaz Time</a></li>

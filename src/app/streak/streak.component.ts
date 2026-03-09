@@ -1,8 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FirestoreService, Streak } from '../services/firestore.service';
 import { AuthService } from '../services/auth.service';
+import { NotificationService } from '../services/notification.service';
+import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms'; 
 import { CommonModule } from '@angular/common';
+import { StatsComponent } from '../components/stats.component';
 import { QuranQuotes, SahihBukhariQuotes, SahihMuslimQuotes } from '../quotes'; 
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -11,7 +14,7 @@ import { takeUntil } from 'rxjs/operators';
   selector: 'app-streak',
   templateUrl: './streak.component.html',
   styleUrls: ['./streak.component.css'],
-  imports: [FormsModule, CommonModule]
+  imports: [FormsModule, CommonModule, StatsComponent]
 })
 export class StreakComponent implements OnInit, OnDestroy {
   streaks: Streak[] = [];
@@ -23,6 +26,10 @@ export class StreakComponent implements OnInit, OnDestroy {
   selectedStreakIndex: number | null = null;
   showSavedQuotes: boolean = false;
   private destroy$ = new Subject<void>();
+
+  private firestoreService = new FirestoreService();
+  private authService = new AuthService();
+  private notificationService = new NotificationService();
 
   milestoneBadges = [
     { days: 7, badge: '🥉 Bronze Streak' },
@@ -36,9 +43,14 @@ export class StreakComponent implements OnInit, OnDestroy {
   savedQuotes: string[] = [];
 
   constructor(
-    private firestoreService: FirestoreService,
-    private authService: AuthService
+    firestoreService: FirestoreService,
+    authService: AuthService,
+    notificationService: NotificationService,
+    private http: HttpClient
   ) {
+    this.firestoreService = firestoreService;
+    this.authService = authService;
+    this.notificationService = notificationService;
     this.quoteOfTheDay = this.motivationalQuotes[Math.floor(Math.random() * this.motivationalQuotes.length)];
   }
 
@@ -79,6 +91,9 @@ export class StreakComponent implements OnInit, OnDestroy {
     try {
       await this.firestoreService.addStreak(newStreak);
       
+      // Show notification
+      this.notificationService.success(`✅ Streak "${this.newStreakName}" added!`);
+      
       // Reset input fields
       this.newStreakName = '';
       this.newStreakDuration = undefined;
@@ -87,7 +102,7 @@ export class StreakComponent implements OnInit, OnDestroy {
       console.log('Streak added to Firestore');
     } catch (error) {
       console.error('Error adding streak:', error);
-      alert('Failed to add streak. Please try again.');
+      this.notificationService.error('❌ Failed to add streak. Please try again.');
     }
   }
 
@@ -101,13 +116,24 @@ export class StreakComponent implements OnInit, OnDestroy {
     try {
       await this.firestoreService.updateStreak(streak.id, { count: newCount });
       
+      // Show notification
+      this.notificationService.success(`🎉 ${streak.name}: ${newCount} day(s)!`);
+      
+      // Check for milestone badge
+      const milestones = this.milestoneBadges.filter(m => m.days === newCount);
+      if (milestones.length > 0) {
+        this.notificationService.success(`🏅 ${milestones[0].badge} Unlocked!`);
+      }
+      
       // Check if user has completed the goal
       if (streak.duration && newCount >= streak.duration) {
         this.selectedStreakIndex = index;
         this.showGoalModal = true;
+        this.notificationService.success(`🎊 Goal Achieved! You completed ${streak.duration} days!`);
       }
     } catch (error) {
       console.error('Error incrementing streak:', error);
+      this.notificationService.error('❌ Failed to update streak.');
     }
   }
 
@@ -121,8 +147,10 @@ export class StreakComponent implements OnInit, OnDestroy {
         count: 0, 
         badge: undefined 
       });
+      this.notificationService.warning(`⚠️ ${streak.name} has been reset.`);
     } catch (error) {
       console.error('Error resetting streak:', error);
+      this.notificationService.error('❌ Failed to reset streak.');
     }
   }
 
@@ -135,9 +163,10 @@ export class StreakComponent implements OnInit, OnDestroy {
 
     try {
       await this.firestoreService.deleteStreak(streak.id);
+      this.notificationService.info(`🗑️ "${streak.name}" deleted.`);
     } catch (error) {
       console.error('Error deleting streak:', error);
-      alert('Failed to delete streak. Please try again.');
+      this.notificationService.error('❌ Failed to delete streak. Please try again.');
     }
   }
 
@@ -224,9 +253,25 @@ export class StreakComponent implements OnInit, OnDestroy {
   // Update Hijri date
   updateHijriDate(): void {
     try {
-      const today = new Date();
-      // Simple Hijri date calculation (approximate)
-      this.hijriDate = `1st Ramadan 1445 AH`;
+      // Fetch Hijri date from Aladhan API
+      this.http.get<any>('https://api.aladhan.com/v1/gToH')
+        .subscribe(
+          (response: any) => {
+            if (response && response.data && response.data.hijri) {
+              const hijri = response.data.hijri;
+              const day = hijri.day;
+              const month = hijri.month.en;
+              const year = hijri.year;
+              this.hijriDate = `${day} ${month} ${year} AH`;
+            }
+          },
+          (error: any) => {
+            console.error('Error fetching Hijri date:', error);
+            // Fallback to today's date in Gregorian if API fails
+            const today = new Date();
+            this.hijriDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+          }
+        );
     } catch (error) {
       this.hijriDate = 'Unable to load date';
     }
