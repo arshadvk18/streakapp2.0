@@ -646,6 +646,14 @@ export class QiblaFinderComponent implements OnInit, OnDestroy {
   cameraAvailable = false;
   needsPermissions = true;
 
+  // Compass smoothing (reduce jitter)
+  private compassReadings: number[] = [];
+  private readonly SMOOTHING_WINDOW = 5;
+  
+  // Geolocation retry logic
+  private locationRetries = 0;
+  private readonly MAX_RETRIES = 2;
+
   get deviation(): number {
     const diff = Math.abs(((this.compassRotation - this.qiblaAngle) % 360 + 360) % 360);
     return diff > 180 ? 360 - diff : diff;
@@ -725,7 +733,33 @@ export class QiblaFinderComponent implements OnInit, OnDestroy {
     if (event.alpha !== null) {
       this.ngZone.run(() => {
         this.hasCompass = true;
-        this.compassRotation = Math.round(360 - (event.alpha || 0));
+        
+        // Apply smoothing to compass readings to reduce jitter
+        let reading = 360 - (event.alpha || 0);
+        
+        // Handle wraparound (e.g., 359 to 1)
+        if (this.compassReadings.length > 0) {
+          const lastReading = this.compassReadings[this.compassReadings.length - 1];
+          if (Math.abs(reading - lastReading) > 180) {
+            if (reading > lastReading) {
+              reading -= 360;
+            } else {
+              reading += 360;
+            }
+          }
+        }
+        
+        this.compassReadings.push(reading);
+        
+        // Keep only last N readings for smoothing window
+        if (this.compassReadings.length > this.SMOOTHING_WINDOW) {
+          this.compassReadings.shift();
+        }
+        
+        // Calculate smoothed average
+        const smoothedReading = this.compassReadings.reduce((a, b) => a + b, 0) / this.compassReadings.length;
+        this.compassRotation = Math.round(smoothedReading) % 360;
+        if (this.compassRotation < 0) this.compassRotation += 360;
       });
     }
   };
@@ -746,29 +780,105 @@ export class QiblaFinderComponent implements OnInit, OnDestroy {
   async requestPermissions(): Promise<void> {
     try {
       if ('requestPermission' in (window as any).DeviceOrientationEvent) {
-        const perm = await (window.DeviceOrientationEvent as any).requestPermission();
-        if (perm === 'granted') {
-          this.needsPermissions = false;
-          this.requestLocationAndQibla();
+        try {
+          const perm = await (window.DeviceOrientationEvent as any).requestPermission();
+          if (perm === 'granted') {
+            this.needsPermissions = false;
+            this.requestLocationAndQibla();
+          } else {
+            this.notificationService.error('⚠️ Permissions required for Qibla direction');
+          }
+        } catch (permError) {
+          this.notificationService.error('Permission request failed. Try again.');
         }
       } else {
+        // Non-iOS devices or older browsers
         this.needsPermissions = false;
         this.requestLocationAndQibla();
       }
     } catch (error) {
       console.error('Permission error:', error);
-      this.notificationService.error('Permission denied');
+      this.notificationService.error('Unable to request permissions');
     }
   }
 
   private async requestLocationAndQibla(): Promise<void> {
     try {
-      const location = await this.qiblaService.requestLocation();
+      // Reset retries on new attempt
+      this.locationRetries = 0;
+      this.attemptLocationRequest();
+    } catch (error: any) {
+      console.error('Fatal location error:', error);
+    }
+  }
+
+  /**
+   * Attempt to get location with retry logic
+   */
+  private async attemptLocationRequest(): Promise<void> {
+    try {
+      const location = await this.qiblaService.requestLocation({
+        timeout: 10000,
+        enableHighAccuracy: true,
+        maximumAge: 0
+      });
+
+      // Validate coordinates
+      if (!this.qiblaService.isValidCoordinate(location.latitude, location.longitude)) {
+        throw new Error('Invalid coordinates received');
+      }
+
       this.qiblaService.calculateQibla(location.latitude, location.longitude);
       this.notificationService.success('✦ Qibla direction found');
+      this.locationRetries = 0;
     } catch (error: any) {
-      this.notificationService.error(error?.message || 'Location access denied');
+      this.locationRetries++;
+      
+      if (this.locationRetries <= this.MAX_RETRIES) {
+        // Retry with a slight delay
+        this.notificationService.error(`${error?.message || 'Location failed'}. Retrying...`);
+        await this.delay(1500);
+        this.attemptLocationRequest();
+      } else {
+        // After retries exhausted, offer manual input option
+        this.showManualInputOption(error?.message);
+      }
     }
+  }
+
+  /**
+   * Show manual coordinate input as fallback
+   */
+  private showManualInputOption(errorMsg: string): void {
+    const userInput = prompt(
+      `📍 ${errorMsg}\n\nEnter your coordinates (e.g., "24.4539,-118.2441" for Santa Monica):\n\nLatitude (−90 to 90), Longitude (−180 to 180)`,
+      '24.4539,-118.2441'
+    );
+
+    if (!userInput) {
+      this.notificationService.error('Location required to find Qibla');
+      return;
+    }
+
+    const [latStr, lngStr] = userInput.split(',').map(s => s.trim());
+    const latitude = parseFloat(latStr);
+    const longitude = parseFloat(lngStr);
+
+    if (!this.qiblaService.isValidCoordinate(latitude, longitude)) {
+      this.notificationService.error('❌ Invalid coordinates. Please use correct format.');
+      this.showManualInputOption('Invalid format');
+      return;
+    }
+
+    this.qiblaService.calculateQibla(latitude, longitude);
+    this.notificationService.success(`✓ Qibla found for (${latitude.toFixed(4)}°, ${longitude.toFixed(4)}°)`);
+  }
+
+  /**
+   * Utility delay function for retry logic
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   async toggleCamera(): Promise<void> {
@@ -777,17 +887,34 @@ export class QiblaFinderComponent implements OnInit, OnDestroy {
 
   private async startCamera(): Promise<void> {
     try {
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+      const constraints = {
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          torch: false
+        },
         audio: false
-      });
+      };
+
+      this.mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      
       if (this.cameraFeed?.nativeElement) {
         this.cameraFeed.nativeElement.srcObject = this.mediaStream;
         await this.cameraFeed.nativeElement.play();
         this.cameraAvailable = true;
+        this.notificationService.success('📷 Camera activated - AR mode ready');
       }
     } catch (error: any) {
-      this.notificationService.error(`Camera denied: ${error?.message}`);
+      let errorMsg = 'Camera access denied';
+      if (error.name === 'NotAllowedError' || error.code === 13) {
+        errorMsg = '🔒 Camera permission denied in settings';
+      } else if (error.name === 'NotFoundError') {
+        errorMsg = '📹 No camera found on device';
+      } else if (error.name === 'NotReadableError') {
+        errorMsg = '⚠️ Camera is busy or unavailable';
+      }
+      this.notificationService.error(errorMsg);
       this.cameraAvailable = false;
     }
   }
