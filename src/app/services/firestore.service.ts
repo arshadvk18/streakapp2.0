@@ -312,4 +312,92 @@ export class FirestoreService {
     }
     this.streaks$.next([]);
   }
+
+  // ============= AYAH (QURANIC VERSES) METHODS =============
+
+  /**
+   * Save Ayah to Firestore
+   */
+  async saveAyah(ayah: any): Promise<void> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      const userDocRef = doc(this.firestore, 'users', user.uid);
+      const userSnapshot = await getDocs(
+        query(collection(this.firestore, 'users'), where('__name__', '==', user.uid))
+      );
+
+      if (userSnapshot.docs.length > 0) {
+        const userData = userSnapshot.docs[0].data();
+        const existingAyahs = userData['savedAyahs'] || [];
+        
+        // Check if already saved
+        const alreadySaved = existingAyahs.some(
+          (a: any) => a.surah === ayah.surah && a.ayah === ayah.ayah
+        );
+        
+        if (!alreadySaved) {
+          const updatedAyahs = [...existingAyahs, { ...ayah, savedAt: new Date() }];
+          await updateDoc(userDocRef, { savedAyahs: updatedAyahs });
+        }
+      } else {
+        // Create user document if it doesn't exist
+        await setDoc(userDocRef, {
+          savedAyahs: [{ ...ayah, savedAt: new Date() }]
+        }, { merge: true });
+      }
+    } catch (error) {
+      console.error('Error saving ayah:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get saved Ayahs from Firestore
+   */
+  async getSavedAyahs(): Promise<any[]> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      const userSnapshot = await getDocs(
+        query(collection(this.firestore, 'users'), where('__name__', '==', user.uid))
+      );
+
+      if (userSnapshot.docs.length > 0) {
+        const userData = userSnapshot.docs[0].data();
+        return userData['savedAyahs'] || [];
+      }
+      return [];
+    } catch (error) {
+      console.error('Error getting saved ayahs:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete saved Ayah from Firestore
+   */
+  async deleteAyah(index: number): Promise<void> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      const userDocRef = doc(this.firestore, 'users', user.uid);
+      const userSnapshot = await getDocs(
+        query(collection(this.firestore, 'users'), where('__name__', '==', user.uid))
+      );
+
+      if (userSnapshot.docs.length > 0) {
+        const userData = userSnapshot.docs[0].data();
+        const existingAyahs = userData['savedAyahs'] || [];
+        const updatedAyahs = existingAyahs.filter((_: any, i: number) => i !== index);
+        await updateDoc(userDocRef, { savedAyahs: updatedAyahs });
+      }
+    } catch (error) {
+      console.error('Error deleting ayah:', error);
+      throw error;
+    }
+  }
 }

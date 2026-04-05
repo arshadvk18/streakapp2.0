@@ -570,6 +570,29 @@
   text-align: center;
   box-shadow: 0 0 80px var(--gold-glow), 0 24px 64px var(--card-shadow);
   transition: background 0.3s;
+  position: relative;
+}
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  border: 1px solid var(--action-border);
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.modal-close:hover {
+  background: var(--gold-dim);
+  border-color: var(--gold-border);
+  color: var(--gold);
 }
 .modal-ornament {
   color: var(--gold);
@@ -593,4 +616,189 @@
   margin: 0 0 24px;
 }
 .modal-body strong { color: var(--text-primary); font-weight: 700; }
+.modal-body em { color: var(--gold); font-style: italic; }
 .modal-actions { display: flex; flex-direction: column; gap: 10px; }
+.modal-actions .btn-primary,
+.modal-actions .btn-ghost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.modal-actions svg {
+  width: 16px;
+  height: 16px;
+}
+.modal-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Ayah of the Day Card ─── */
+.ayah-card {
+  width: 100%;
+  max-width: 560px;
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 8px 40px var(--card-shadow);
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+.ayah-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 12px 48px var(--gold-glow);
+}
+.ayah-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--gold);
+}
+.ayah-icon {
+  font-size: 1.2rem;
+  opacity: 0.8;
+}
+.ayah-arabic {
+  font-family: 'Noto Naskh Arabic', serif;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 2;
+  margin-bottom: 16px;
+  direction: rtl;
+  letter-spacing: 0.05em;
+}
+.ayah-transliteration {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  font-style: italic;
+}
+.ayah-translation {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+.ayah-source {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: var(--gold-dim);
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  margin-left: auto;
+  margin-right: auto;
+}
+.ayah-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+/* ─── Saved Ayahs Panel ─── */
+.saved-ayahs-panel {
+  width: 100%;
+  max-width: 560px;
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  transition: background 0.3s, border-color 0.3s;
+}
+.saved-ayahs-panel .panel-header {
+  margin-bottom: 20px;
+}
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.saved-ayah-item {
+  padding: 16px 14px;
+  background: var(--bg-card-mid);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.2s;
+}
+.saved-ayah-item:hover {
+  border-color: var(--gold-border);
+}
+.ayah-item-arabic {
+  font-family: 'Noto Naskh Arabic', serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  direction: rtl;
+  line-height: 1.8;
+}
+.ayah-item-translation {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.ayah-item-source {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+}
+.btn-delete-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--action-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0.6;
+}
+.btn-delete-icon svg {
+  width: 14px;
+  height: 14px;
+  fill: #f87171;
+}
+.btn-delete-icon:hover {
+  background: rgba(248,113,113,0.12);
+  border-color: rgba(248,113,113,0.3);
+  opacity: 1;
+}
