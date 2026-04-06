@@ -293,3 +293,66 @@
 :host-context(html:not(.dark)) .prayer-card:hover {
   box-shadow: 0 8px 28px rgba(160,120,32,0.14);
 }
+
+/* ─── Location Badge ─── */
+.location-badge {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: -8px;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Error Message ─── */
+.error-message {
+  width: 100%;
+  max-width: 520px;
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.78rem;
+  color: #ef4444;
+  animation: slideDown 0.3s ease;
+}
+
+.error-message svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke: #ef4444;
+}
+
+.retry-btn {
+  margin-left: auto;
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 6px;
+  color: #ef4444;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.05em;
+}
+
+.retry-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

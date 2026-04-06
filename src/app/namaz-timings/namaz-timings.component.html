@@ -36,7 +36,21 @@
         Next: <strong>{{ upcomingPrayer }}</strong>
       </div>
     </div>
+    <!-- Location info -->
+    <div *ngIf="userLocation" class="location-badge">
+      {{ userLocation }}
+    </div>
   </header>
+
+  <!-- Error message -->
+  <div *ngIf="error" class="error-message">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"></circle>
+      <polyline points="12 8 12 12 16 16"></polyline>
+    </svg>
+    {{ error }}
+    <button (click)="refreshTimes()" class="retry-btn">Retry</button>
+  </div>
 
   <!-- Loading -->
   <div *ngIf="loading" class="loading-state">
