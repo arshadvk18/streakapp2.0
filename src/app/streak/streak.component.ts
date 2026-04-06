@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { StatsComponent } from '../components/stats.component';
+import { StatsDashboardComponent } from '../components/stats-dashboard.component';
 import { QuranQuotes, SahihBukhariQuotes, SahihMuslimQuotes } from '../quotes';
 import { getAyahOfDay, AyahOfDay } from '../verses';
 import { Subject } from 'rxjs';
@@ -16,7 +17,7 @@ import { takeUntil } from 'rxjs/operators';
   standalone: true,
   templateUrl: './streak.component.html',
   styleUrls: ['./streak.component.css'],
-  imports: [FormsModule, CommonModule, StatsComponent]
+  imports: [FormsModule, CommonModule, StatsComponent, StatsDashboardComponent]
 })
 export class StreakComponent implements OnInit, OnDestroy {
   streaks: Streak[] = [];

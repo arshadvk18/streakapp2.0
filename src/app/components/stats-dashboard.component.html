@@ -1,0 +1,151 @@
+<div class="stats-dashboard">
+  <ng-container *ngIf="stats$ | async as stats">
+    <!-- Motivational Header -->
+    <div class="motivational-banner">
+      <div class="banner-content">
+        <h2 class="banner-title">{{ getMotivationalMessage(stats) }}</h2>
+        <p class="banner-subtitle">Track your spiritual progress</p>
+      </div>
+    </div>
+
+    <!-- Main Stats Grid -->
+    <div class="stats-grid">
+      <!-- Current Streak Card -->
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-content">
+          <h3 class="stat-label">Current</h3>
+          <div class="stat-value">{{ stats.currentStreak }}</div>
+          <p class="stat-unit">{{ stats.currentStreak === 1 ? 'day' : 'days' }}</p>
+        </div>
+      </div>
+
+      <!-- Longest Streak Card -->
+      <div class="stat-card">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-content">
+          <h3 class="stat-label">Best</h3>
+          <div class="stat-value">{{ stats.longestStreak }}</div>
+          <p class="stat-unit">{{ stats.longestStreak === 1 ? 'day' : 'days' }}</p>
+        </div>
+      </div>
+
+      <!-- Total Streaks Card -->
+      <div class="stat-card">
+        <div class="stat-icon">✨</div>
+        <div class="stat-content">
+          <h3 class="stat-label">Active</h3>
+          <div class="stat-value">{{ stats.totalStreaks }}</div>
+          <p class="stat-unit">{{ stats.totalStreaks === 1 ? 'streak' : 'streaks' }}</p>
+        </div>
+      </div>
+
+      <!-- Average Streak Card -->
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-content">
+          <h3 class="stat-label">Average</h3>
+          <div class="stat-value">{{ stats.averageStreak }}</div>
+          <p class="stat-unit">days</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completion Percentage Section -->
+    <div class="completion-section">
+      <h3 class="section-title">📈 Monthly Progress</h3>
+
+      <div class="comparison-cards">
+        <!-- This Month -->
+        <div class="comparison-card">
+          <div class="month-label">This Month</div>
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div 
+                class="progress-fill" 
+                [style.width.%]="stats.completionPercentageThisMonth"
+              ></div>
+            </div>
+            <div class="progress-label">
+              {{ stats.monthComparison.thisMonth }}/{{ getDaysInMonth() }}
+            </div>
+          </div>
+          <div class="percentage-display">{{ stats.completionPercentageThisMonth }}%</div>
+        </div>
+
+        <!-- Last Month -->
+        <div class="comparison-card">
+          <div class="month-label">Last Month</div>
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div 
+                class="progress-fill secondary" 
+                [style.width.%]="stats.completionPercentageLastMonth"
+              ></div>
+            </div>
+            <div class="progress-label">
+              {{ stats.monthComparison.lastMonth }}/{{ getDaysInLastMonth() }}
+            </div>
+          </div>
+          <div class="percentage-display">{{ stats.completionPercentageLastMonth }}%</div>
+        </div>
+      </div>
+
+      <!-- Trend Indicator -->
+      <div class="trend-indicator">
+        <span class="trend-icon">{{ getTrendArrow(stats.monthComparison.changePercent) }}</span>
+        <span class="trend-text">
+          <span *ngIf="stats.monthComparison.change > 0" class="positive">
+            <strong>+{{ stats.monthComparison.change }}</strong> vs last month
+          </span>
+          <span *ngIf="stats.monthComparison.change < 0" class="negative">
+            <strong>{{ stats.monthComparison.change }}</strong> vs last month
+          </span>
+          <span *ngIf="stats.monthComparison.change === 0" class="neutral">
+            <strong>Same</strong> as last month
+          </span>
+        </span>
+        <span class="trend-percent" [ngClass]="getTrendColor(stats.monthComparison.changePercent)">
+          {{ formatTrendPercent(stats.monthComparison.changePercent) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Quick Stats Summary -->
+    <div class="summary-section">
+      <h3 class="section-title">📌 Summary</h3>
+
+      <div class="summary-items">
+        <div class="summary-item">
+          <span class="summary-label">Consistency</span>
+          <span class="summary-value">
+            {{ (stats.completionPercentageThisMonth + stats.completionPercentageLastMonth) / 2 | number:'1.0-0' }}%
+          </span>
+        </div>
+
+        <div class="summary-item">
+          <span class="summary-label">Best Days</span>
+          <span class="summary-value">{{ stats.longestStreak }}</span>
+        </div>
+
+        <div class="summary-item">
+          <span class="summary-label">Streaks</span>
+          <span class="summary-value">{{ stats.totalStreaks }}</span>
+        </div>
+
+        <div class="summary-item">
+          <span class="summary-label">Status</span>
+          <span class="summary-value status-badge" [class.active]="stats.currentStreak > 0">
+            {{ stats.currentStreak > 0 ? '✓ Active' : '○ Paused' }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Loading State -->
+  <div *ngIf="!(stats$ | async)" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading stats...</p>
+  </div>
+</div>
