@@ -13,8 +13,15 @@ import { Router } from '@angular/router';
   template: `
     <div class="settings-container">
       <div class="settings-header">
-        <h1>⚙️ Settings</h1>
-        <p>Customize your Islamic Streak experience</p>
+        <button class="back-btn" (click)="goBack()" title="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <div class="header-content">
+          <h1>⚙️ Settings</h1>
+          <p>Customize your Islamic Streak experience</p>
+        </div>
       </div>
 
       <div class="settings-card">
@@ -24,6 +31,18 @@ import { Router } from '@angular/router';
             <input type="checkbox" [checked]="isDarkMode" (change)="toggleDarkMode()" />
             <span>Dark Mode</span>
           </label>
+        </div>
+      </div>
+
+      <div class="settings-card clickable" (click)="navigateToNotifications()">
+        <div class="setting-section">
+          <div class="setting-item-header">
+            <h3>🔔 Notifications</h3>
+            <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+          <p class="setting-description">Manage prayer times, streaks & reminders</p>
         </div>
       </div>
 
@@ -58,8 +77,37 @@ import { Router } from '@angular/router';
     }
 
     .settings-header {
-      text-align: center;
+      display: flex;
+      align-items: center;
+      gap: 16px;
       margin-bottom: 32px;
+    }
+
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      background: var(--gold-border, rgba(212,175,55,0.15));
+      border: 1px solid var(--gold-border, rgba(212,175,55,0.25));
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold, #d4af37);
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      background: var(--gold-border, rgba(212,175,55,0.25));
+    }
+
+    .back-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .header-content {
+      flex: 1;
     }
 
     .settings-header h1 {
@@ -71,6 +119,7 @@ import { Router } from '@angular/router';
     .settings-header p {
       font-size: 0.9rem;
       color: var(--text-secondary, rgba(245,240,232,0.65));
+      margin: 0;
     }
 
     .settings-card {
@@ -79,6 +128,18 @@ import { Router } from '@angular/router';
       border-radius: 12px;
       padding: 24px;
       margin-bottom: 20px;
+      transition: all 0.2s;
+    }
+
+    .settings-card.clickable {
+      cursor: pointer;
+    }
+
+    .settings-card.clickable:hover {
+      background: var(--bg-card-hover, rgba(13,20,36,0.8));
+      border-color: var(--gold, #d4af37);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(212,175,55,0.15);
     }
 
     .setting-section h3 {
@@ -87,6 +148,32 @@ import { Router } from '@angular/router';
       color: var(--gold, #d4af37);
       border-bottom: 1px solid var(--card-border, rgba(212,175,55,0.15));
       padding-bottom: 8px;
+    }
+
+    .setting-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .setting-item-header h3 {
+      margin: 0;
+      border: none;
+      padding: 0;
+    }
+
+    .arrow-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--gold, #d4af37);
+      flex-shrink: 0;
+    }
+
+    .setting-description {
+      font-size: 0.85rem;
+      color: var(--text-secondary, rgba(245,240,232,0.65));
+      margin: 0;
     }
 
     .setting-item {
@@ -153,20 +240,19 @@ export class SettingsComponent implements OnInit {
     this.themeService.toggleTheme();
   }
 
-  confirmLogout(): void {
-    if (confirm('Are you sure you want to logout? You will need to login again.')) {
-      this.logout();
-    }
+  navigateToNotifications(): void {
+    this.router.navigate(['/settings/notifications']);
   }
 
-  async logout(): Promise<void> {
-    try {
-      await this.authService.logout();
-      this.notificationService.success('👋 Logged out successfully!');
+  goBack(): void {
+    this.router.navigate(['/streak']);
+  }
+
+  confirmLogout(): void {
+    if (confirm('Logout from all devices?')) {
+      this.authService.logout();
       this.router.navigate(['/auth']);
-    } catch (error) {
-      console.error('Logout error:', error);
-      this.notificationService.error('Failed to logout');
+      this.notificationService.success('Logged out successfully');
     }
   }
 }
