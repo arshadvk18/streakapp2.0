@@ -1,0 +1,292 @@
+<div class="wotd-root">
+
+  <!-- Arabesque background -->
+  <div class="arabesque-bg" aria-hidden="true">
+    <svg class="arabesque-svg" viewBox="0 0 800 800" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <pattern id="geo-wotd" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+          <path d="M40 0 L80 20 L80 60 L40 80 L0 60 L0 20 Z" fill="none" stroke="rgba(212,175,55,0.07)" stroke-width="0.8"/>
+          <circle cx="40" cy="40" r="3" fill="none" stroke="rgba(212,175,55,0.06)" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#geo-wotd)"/>
+    </svg>
+  </div>
+
+  <!-- ════════════════════════════════
+       HEADER
+  ════════════════════════════════ -->
+  <header class="wotd-header">
+    <div class="header-ornament">
+      <span class="ornament-line"></span>
+      <span class="ornament-diamond">◆</span>
+      <span class="ornament-diamond small">◆</span>
+      <span class="ornament-diamond">◆</span>
+      <span class="ornament-line"></span>
+    </div>
+    <h1 class="wotd-title">
+      <span class="title-arabic">كَلِمَةُ اليَوْم</span>
+      <span class="title-eng">Word of the Day</span>
+    </h1>
+  </header>
+
+  <!-- ════════════════════════════════
+       MINI PROGRESS BAR
+  ════════════════════════════════ -->
+  <div class="progress-strip">
+    <div class="progress-stat">
+      <span class="progress-stat__num">{{ progress.totalLearned }}</span>
+      <span class="progress-stat__lbl">Learned</span>
+    </div>
+    <div class="progress-divider" aria-hidden="true">◆</div>
+    <div class="progress-stat">
+      <span class="progress-stat__num">🔥 {{ progress.currentStreak }}</span>
+      <span class="progress-stat__lbl">Day Streak</span>
+    </div>
+    <div class="progress-divider" aria-hidden="true">◆</div>
+    <div class="progress-stat">
+      <span class="progress-stat__num">{{ understandingPct }}%</span>
+      <span class="progress-stat__lbl">Understanding</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       SUB-NAV TABS
+  ════════════════════════════════ -->
+  <nav class="sub-nav" aria-label="Word navigation">
+    <button class="sub-nav-btn" [class.active]="viewState === 'word'" (click)="setView('word')">
+      📖 Today's Word
+    </button>
+    <button class="sub-nav-btn" [class.active]="viewState === 'revision'" (click)="setView('revision')">
+      🔄 Review
+      <span *ngIf="revisionWords.length > 0" class="rev-badge">{{ revisionWords.length }}</span>
+    </button>
+    <button class="sub-nav-btn" [class.active]="viewState === 'progress'" (click)="setView('progress')">
+      📊 Progress
+    </button>
+  </nav>
+
+  <!-- ════════════════════════════════
+       VIEW: TODAY'S WORD
+  ════════════════════════════════ -->
+  <div class="view-content" *ngIf="viewState === 'word'">
+
+    <div class="word-card">
+      <div class="word-card-glow" aria-hidden="true"></div>
+
+      <!-- Arabic word -->
+      <div class="word-arabic-wrap">
+        <span class="word-arabic">{{ todayWord.word }}</span>
+      </div>
+
+      <!-- Transliteration & meaning -->
+      <p class="word-translit">{{ todayWord.transliteration }}</p>
+      <p class="word-meaning">"{{ todayWord.meaning }}"</p>
+
+      <!-- Root & Frequency -->
+      <div class="word-meta-row">
+        <div class="word-meta-chip">
+          <span class="meta-label">Root</span>
+          <span class="meta-value meta-arabic">{{ todayWord.root }}</span>
+        </div>
+        <div class="word-meta-chip">
+          <span class="meta-label">Frequency</span>
+          <span class="meta-value">{{ todayWord.frequency }}× in Qur'an</span>
+        </div>
+      </div>
+
+      <!-- Mark as learned -->
+      <button *ngIf="!isWordLearned" class="btn-primary learn-btn" (click)="markLearned()">
+        ✅ Mark as Learned
+      </button>
+      <div *ngIf="isWordLearned" class="learned-badge">
+        <span>🌟 Learned Today!</span>
+        <button class="btn-ghost-sm" (click)="startQuiz()">Retake Quiz →</button>
+      </div>
+    </div>
+
+    <!-- ── WORD FORMS ── -->
+    <div class="section-card" *ngIf="todayWord.forms.length > 0">
+      <div class="section-title-row">
+        <span class="ornament-diamond small" aria-hidden="true">◆</span>
+        <h2 class="section-title">Word Forms</h2>
+        <span class="ornament-diamond small" aria-hidden="true">◆</span>
+      </div>
+      <div class="forms-grid">
+        <div *ngFor="let form of todayWord.forms" class="form-chip">
+          <span class="form-word">{{ form.word }}</span>
+          <span class="form-meaning">{{ form.meaning }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── QUR'AN OCCURRENCES ── -->
+    <div class="section-card">
+      <button class="section-toggle" (click)="toggleOccurrences()">
+        <div class="section-title-row">
+          <span class="ornament-diamond small" aria-hidden="true">◆</span>
+          <h2 class="section-title">Qur'an Occurrences</h2>
+          <span class="ornament-diamond small" aria-hidden="true">◆</span>
+        </div>
+        <span class="toggle-icon" [class.open]="showOccurrences">▾</span>
+      </button>
+
+      <div class="occurrences-list" *ngIf="showOccurrences">
+        <div *ngFor="let occ of todayWord.occurrences; let i = index"
+             class="occurrence-item" (click)="toggleOccurrenceDetail(i)">
+          <div class="occ-header">
+            <span class="occ-ref">Surah {{ occ.surah }} : Ayah {{ occ.ayah }}</span>
+            <span class="occ-expand" [class.open]="expandedOccurrence === i">▾</span>
+          </div>
+          <div class="occ-detail" *ngIf="expandedOccurrence === i && occ.text">
+            <p class="occ-arabic">{{ occ.text }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       VIEW: QUIZ
+  ════════════════════════════════ -->
+  <div class="view-content" *ngIf="viewState === 'quiz' && quiz">
+    <div class="quiz-card">
+      <div class="quiz-header">
+        <span class="quiz-icon">🧠</span>
+        <h2 class="quiz-title">Quick Quiz</h2>
+      </div>
+
+      <p class="quiz-question">{{ quiz.question }}</p>
+
+      <div class="quiz-options">
+        <button *ngFor="let opt of quiz.options; let i = index"
+                class="quiz-option"
+                [class.selected]="selectedAnswer === i"
+                [class.correct]="quizAnswered && opt.isCorrect"
+                [class.wrong]="quizAnswered && selectedAnswer === i && !opt.isCorrect"
+                [disabled]="quizAnswered"
+                (click)="selectAnswer(i)">
+          <span class="opt-letter">{{ ['A','B','C','D'][i] }}</span>
+          <span class="opt-text">{{ opt.text }}</span>
+          <span *ngIf="quizAnswered && opt.isCorrect" class="opt-icon">✓</span>
+          <span *ngIf="quizAnswered && selectedAnswer === i && !opt.isCorrect" class="opt-icon wrong">✗</span>
+        </button>
+      </div>
+
+      <div class="quiz-feedback" *ngIf="quizAnswered">
+        <p *ngIf="quizCorrect" class="feedback-correct">
+          🎉 MashaAllah! Correct answer!
+        </p>
+        <p *ngIf="!quizCorrect" class="feedback-wrong">
+          ❌ Not quite. The correct meaning is "{{ todayWord.meaning }}"
+        </p>
+        <button class="btn-primary" (click)="backToWord()">← Back to Word</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       VIEW: REVISION
+  ════════════════════════════════ -->
+  <div class="view-content" *ngIf="viewState === 'revision'">
+
+    <div *ngIf="revisionWords.length === 0" class="empty-state">
+      <span class="empty-icon-lg">📚</span>
+      <p class="empty-title">No words to review</p>
+      <p class="empty-subtitle">Learn new words and they'll appear here for spaced revision.</p>
+      <button class="btn-ghost" (click)="setView('word')">← Back to Today's Word</button>
+    </div>
+
+    <div *ngIf="currentRevision" class="revision-card">
+      <div class="rev-header">
+        <span class="rev-label">Revision</span>
+        <span class="rev-counter">{{ currentRevisionIndex + 1 }} / {{ revisionWords.length }}</span>
+      </div>
+
+      <p class="rev-prompt">Do you remember this word?</p>
+      <p class="rev-arabic">{{ currentRevision.word.word }}</p>
+      <p class="rev-translit">{{ currentRevision.word.transliteration }}</p>
+
+      <div *ngIf="!revisionRevealed" class="rev-action-wrap">
+        <button class="btn-primary" (click)="revealRevision()">Reveal Meaning</button>
+      </div>
+
+      <div *ngIf="revisionRevealed" class="rev-reveal">
+        <p class="rev-meaning">"{{ currentRevision.word.meaning }}"</p>
+        <p class="rev-days">Learned {{ currentRevision.daysSinceLearned }} day(s) ago</p>
+        <div class="rev-buttons">
+          <button class="btn-remember" (click)="answerRevision(true)">
+            ✅ I Remembered
+          </button>
+          <button class="btn-forgot" (click)="answerRevision(false)">
+            ❌ I Forgot
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="currentRevisionIndex >= revisionWords.length && revisionWords.length > 0" class="empty-state">
+      <span class="empty-icon-lg">🌟</span>
+      <p class="empty-title">All reviews done!</p>
+      <p class="empty-subtitle">Great job! Come back later for more.</p>
+      <button class="btn-ghost" (click)="setView('word')">← Back to Today's Word</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       VIEW: PROGRESS
+  ════════════════════════════════ -->
+  <div class="view-content" *ngIf="viewState === 'progress'">
+    <div class="progress-card">
+      <div class="section-title-row">
+        <span class="ornament-diamond small" aria-hidden="true">◆</span>
+        <h2 class="section-title">Your Learning Journey</h2>
+        <span class="ornament-diamond small" aria-hidden="true">◆</span>
+      </div>
+
+      <div class="progress-stats-grid">
+        <div class="prog-stat-card">
+          <span class="prog-icon">📖</span>
+          <span class="prog-num">{{ progress.totalLearned }}</span>
+          <span class="prog-lbl">Words Learned</span>
+        </div>
+        <div class="prog-stat-card">
+          <span class="prog-icon">🔥</span>
+          <span class="prog-num">{{ progress.currentStreak }}</span>
+          <span class="prog-lbl">Day Streak</span>
+        </div>
+        <div class="prog-stat-card">
+          <span class="prog-icon">🧠</span>
+          <span class="prog-num">{{ understandingPct }}%</span>
+          <span class="prog-lbl">Understanding</span>
+        </div>
+      </div>
+
+      <!-- Understanding bar -->
+      <div class="understanding-wrap">
+        <p class="understanding-label">Qur'anic Word Coverage</p>
+        <div class="understanding-bar">
+          <div class="understanding-fill" [style.width.%]="understandingPct"></div>
+        </div>
+        <p class="understanding-note">Based on word frequency weight across the Qur'an</p>
+      </div>
+
+      <!-- Learned words list -->
+      <div class="learned-list-wrap" *ngIf="progress.learnedWords.length > 0">
+        <h3 class="learned-list-title">Learned Words</h3>
+        <div class="learned-list">
+          <div *ngFor="let lw of progress.learnedWords" class="learned-item">
+            <ng-container *ngIf="wotdService.getWordById(lw.wordId) as w">
+              <span class="li-arabic">{{ w.word }}</span>
+              <span class="li-meaning">{{ w.meaning }}</span>
+              <span class="li-level" [class.mastered]="lw.revisionLevel >= 3">
+                {{ lw.revisionLevel >= 3 ? '⭐ Mastered' : 'Level ' + lw.revisionLevel }}
+              </span>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
