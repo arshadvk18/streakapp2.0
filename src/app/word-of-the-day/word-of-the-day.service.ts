@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { QuranWord, LearnedWord, WordProgress, QuizQuestion, QuizOption, RevisionWord } from './quran-word.model';
+import { QuranWord, LearnedWord, WordProgress, QuizQuestion, QuizOption, RevisionWord, DailyStats } from './quran-word.model';
 import { QURAN_WORDS, TOTAL_QURAN_WORD_FREQUENCY } from './quran-words.data';
 
 const STORAGE_KEY = 'wotd_progress';
@@ -32,6 +32,26 @@ export class WordOfTheDayService {
     return QURAN_WORDS.find(w => w.id === id);
   }
 
+  /** Get all words the user hasn't learned yet */
+  getUnlearnedWords(): QuranWord[] {
+    const learnedIds = new Set(this.progress.learnedWords.map(w => w.wordId));
+    return QURAN_WORDS.filter(w => !learnedIds.has(w.id));
+  }
+
+  /** Get count of words learned today */
+  getWordsLearnedToday(): number {
+    const today = this.todayStr();
+    const dailyEntry = this.progress.dailyHistory.find(d => d.date === today);
+    return dailyEntry?.wordsLearned ?? 0;
+  }
+
+  /** Get today's learned word IDs */
+  getTodayLearnedIds(): number[] {
+    const today = this.todayStr();
+    const dailyEntry = this.progress.dailyHistory.find(d => d.date === today);
+    return dailyEntry?.wordIds ?? [];
+  }
+
   /* ════════════════════════════════
      Learning & Streak
   ════════════════════════════════ */
@@ -56,6 +76,15 @@ export class WordOfTheDayService {
     this.progress.totalLearned = this.progress.learnedWords.length;
     this.progress.totalFrequencyWeight += word.frequency;
 
+    // Update daily history
+    let dailyEntry = this.progress.dailyHistory.find(d => d.date === today);
+    if (!dailyEntry) {
+      dailyEntry = { date: today, wordsLearned: 0, wordIds: [] };
+      this.progress.dailyHistory.push(dailyEntry);
+    }
+    dailyEntry.wordsLearned++;
+    dailyEntry.wordIds.push(wordId);
+
     // Update streak
     const yesterday = this.addDays(today, -1);
     if (this.progress.lastLearnedDate === yesterday) {
@@ -64,6 +93,11 @@ export class WordOfTheDayService {
       this.progress.currentStreak = 1;
     }
     this.progress.lastLearnedDate = today;
+
+    // Track best streak
+    if (this.progress.currentStreak > this.progress.bestStreak) {
+      this.progress.bestStreak = this.progress.currentStreak;
+    }
 
     this.saveProgress();
   }
@@ -102,8 +136,10 @@ export class WordOfTheDayService {
     const learned = this.progress.learnedWords.find(w => w.wordId === wordId);
     if (learned) {
       learned.quizScore = correct ? 1 : 0;
-      this.saveProgress();
     }
+    this.progress.quizAttempted++;
+    if (correct) this.progress.quizCorrect++;
+    this.saveProgress();
   }
 
   /* ════════════════════════════════
@@ -151,7 +187,6 @@ export class WordOfTheDayService {
      Progress & Stats
   ════════════════════════════════ */
   getProgress(): WordProgress {
-    // Recalculate streak on access
     const today = this.todayStr();
     const yesterday = this.addDays(today, -1);
     if (this.progress.lastLearnedDate !== today && this.progress.lastLearnedDate !== yesterday) {
@@ -168,20 +203,70 @@ export class WordOfTheDayService {
     );
   }
 
+  getMasteredCount(): number {
+    return this.progress.learnedWords.filter(w => w.revisionLevel >= REVISION_INTERVALS.length).length;
+  }
+
+  getQuizAccuracy(): number {
+    if (!this.progress.quizAttempted) return 0;
+    return Math.round((this.progress.quizCorrect / this.progress.quizAttempted) * 100);
+  }
+
+  getDailyAverage(): number {
+    const history = this.progress.dailyHistory;
+    if (!history.length) return 0;
+    const total = history.reduce((sum, d) => sum + d.wordsLearned, 0);
+    return Math.round((total / history.length) * 10) / 10;
+  }
+
+  getActiveDaysCount(): number {
+    return this.progress.dailyHistory.length;
+  }
+
+  /** Get last N days of learning history for chart display */
+  getRecentHistory(days: number = 7): DailyStats[] {
+    const today = this.todayStr();
+    const result: DailyStats[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const date = this.addDays(today, -i);
+      const entry = this.progress.dailyHistory.find(d => d.date === date);
+      result.push(entry ?? { date, wordsLearned: 0, wordIds: [] });
+    }
+    return result;
+  }
+
   /* ════════════════════════════════
      Private Helpers
   ════════════════════════════════ */
   private loadProgress(): WordProgress {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        // Migrate old data if missing new fields
+        return {
+          totalLearned: parsed.totalLearned ?? 0,
+          currentStreak: parsed.currentStreak ?? 0,
+          bestStreak: parsed.bestStreak ?? parsed.currentStreak ?? 0,
+          lastLearnedDate: parsed.lastLearnedDate ?? '',
+          learnedWords: parsed.learnedWords ?? [],
+          totalFrequencyWeight: parsed.totalFrequencyWeight ?? 0,
+          dailyHistory: parsed.dailyHistory ?? [],
+          quizCorrect: parsed.quizCorrect ?? 0,
+          quizAttempted: parsed.quizAttempted ?? 0,
+        };
+      }
     } catch { /* noop */ }
     return {
       totalLearned: 0,
       currentStreak: 0,
+      bestStreak: 0,
       lastLearnedDate: '',
       learnedWords: [],
       totalFrequencyWeight: 0,
+      dailyHistory: [],
+      quizCorrect: 0,
+      quizAttempted: 0,
     };
   }
 

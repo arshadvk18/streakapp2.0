@@ -35,12 +35,22 @@ export interface LearnedWord {
   quizScore: number;       // Last quiz score (0 or 1)
 }
 
+export interface DailyStats {
+  date: string;            // ISO date string
+  wordsLearned: number;    // Words learned on this date
+  wordIds: number[];       // IDs of words learned
+}
+
 export interface WordProgress {
   totalLearned: number;
   currentStreak: number;
+  bestStreak: number;
   lastLearnedDate: string; // ISO date string
   learnedWords: LearnedWord[];
   totalFrequencyWeight: number; // Sum of frequencies of learned words
+  dailyHistory: DailyStats[];   // Per-day learning history
+  quizCorrect: number;          // Total quiz answers correct
+  quizAttempted: number;        // Total quiz attempts
 }
 
 export interface QuizOption {
