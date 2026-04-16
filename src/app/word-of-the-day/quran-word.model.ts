@@ -1,56 +1,60 @@
 /* ─────────────────────────────────────────
-   Qur'anic Word Data Model
+   quran-word.model.ts
 ───────────────────────────────────────── */
 
 export interface QuranWord {
   id: number;
-  word: string;            // Arabic script
+  word: string;        // Arabic script (text_uthmani from API)
   transliteration: string;
-  root: string;            // Root letters (Arabic)
+  root: string;        // Arabic root letters, e.g. "ر ح م" — from corpus/morphology
   meaning: string;
-  frequency: number;       // Occurrences in Qur'an
-  forms: WordForm[];
+  frequency: number;        // Count of occurrences in loaded pool
+  forms: WordForm[];    // Other words sharing the same root — built by rebuildForms()
   occurrences: WordOccurrence[];
+  audioUrl?: string;        // https://audio.qurancdn.com/...
+  verseKey?: string;        // "2:255"
+  wordPosition?: number;        // 1-based position of this word within its verse
+  // Required to call the corpus/morphology endpoint correctly
 }
 
 export interface WordForm {
-  word: string;            // Arabic script
+  word: string;   // Arabic script
   meaning: string;
 }
 
 export interface WordOccurrence {
   surah: number;
   ayah: number;
-  text?: string;           // Short Arabic snippet
+  text?: string;     // Full verse Arabic text snippet
 }
 
 /* ─── Learning & Progress ─── */
 
 export interface LearnedWord {
   wordId: number;
-  learnedDate: string;     // ISO date string
-  revisionDates: string[]; // Dates when revised
-  nextRevision: string;    // Next scheduled revision date
-  revisionLevel: number;   // 0=new, 1=1day, 2=3days, 3=7days, 4=mastered
-  quizScore: number;       // Last quiz score (0 or 1)
+  learnedDate: string;     // "2025-04-10"
+  revisionDates: string[];
+  nextRevision: string;
+  revisionLevel: number;     // 0=new · 1=1d · 2=3d · 3=7d · 4=mastered
+  quizScore: number;     // 0 or 1
 }
 
 export interface DailyStats {
-  date: string;            // ISO date string
-  wordsLearned: number;    // Words learned on this date
-  wordIds: number[];       // IDs of words learned
+  date: string;
+  wordsLearned: number;
+  wordIds: number[];
 }
 
 export interface WordProgress {
   totalLearned: number;
   currentStreak: number;
   bestStreak: number;
-  lastLearnedDate: string; // ISO date string
+  lastLearnedDate: string;
   learnedWords: LearnedWord[];
-  totalFrequencyWeight: number; // Sum of frequencies of learned words
-  dailyHistory: DailyStats[];   // Per-day learning history
-  quizCorrect: number;          // Total quiz answers correct
-  quizAttempted: number;        // Total quiz attempts
+  totalFrequencyWeight: number;
+  dailyHistory: DailyStats[];
+  quizCorrect: number;
+  quizAttempted: number;
 }
 
 export interface QuizOption {

@@ -1,100 +1,88 @@
 import { Injectable } from '@angular/core';
-import { QuranWord, LearnedWord, WordProgress, QuizQuestion, QuizOption, RevisionWord, DailyStats } from './quran-word.model';
-import { QURAN_WORDS, TOTAL_QURAN_WORD_FREQUENCY } from './quran-words.data';
+import {
+  QuranWord, LearnedWord, WordProgress,
+  QuizQuestion, QuizOption, RevisionWord, DailyStats,
+} from './quran-word.model';
+import { QuranApiService } from './quran-api.service';
 
-const STORAGE_KEY = 'wotd_progress';
-const REVISION_INTERVALS = [1, 3, 7]; // days
+const STORAGE_KEY = 'wotd_progress_v2';
+const REVISION_INTERVALS = [1, 3, 7] as const;   // days
 
 @Injectable({ providedIn: 'root' })
 export class WordOfTheDayService {
 
   private progress: WordProgress;
 
-  constructor() {
+  constructor(private quranApi: QuranApiService) {
     this.progress = this.loadProgress();
   }
 
   /* ════════════════════════════════
-     Word of the Day
+     Initialization
   ════════════════════════════════ */
-  getWordOfTheDay(): QuranWord {
-    const today = this.todayStr();
-    const seed = this.dateSeed(today);
-    const index = seed % QURAN_WORDS.length;
-    return QURAN_WORDS[index];
-  }
 
-  getAllWords(): QuranWord[] {
-    return QURAN_WORDS;
-  }
-
-  getWordById(id: number): QuranWord | undefined {
-    return QURAN_WORDS.find(w => w.id === id);
-  }
-
-  /** Get all words the user hasn't learned yet */
-  getUnlearnedWords(): QuranWord[] {
-    const learnedIds = new Set(this.progress.learnedWords.map(w => w.wordId));
-    return QURAN_WORDS.filter(w => !learnedIds.has(w.id));
-  }
-
-  /** Get count of words learned today */
-  getWordsLearnedToday(): number {
-    const today = this.todayStr();
-    const dailyEntry = this.progress.dailyHistory.find(d => d.date === today);
-    return dailyEntry?.wordsLearned ?? 0;
-  }
-
-  /** Get today's learned word IDs */
-  getTodayLearnedIds(): number[] {
-    const today = this.todayStr();
-    const dailyEntry = this.progress.dailyHistory.find(d => d.date === today);
-    return dailyEntry?.wordIds ?? [];
+  /** Must be awaited once at component init. */
+  async initialize(): Promise<void> {
+    await this.quranApi.initialize();
   }
 
   /* ════════════════════════════════
-     Learning & Streak
+     Word access
   ════════════════════════════════ */
+
+  getWordOfTheDay(): QuranWord | null { return this.quranApi.getWordOfTheDay(); }
+  getAllWords(): QuranWord[] { return this.quranApi.getAllWords(); }
+  getWordById(id: number): QuranWord | undefined { return this.quranApi.getWordById(id); }
+  getTotalAvailable(): number { return this.quranApi.totalAvailable; }
+  getUnlearnedWords(): QuranWord[] {
+    const ids = new Set(this.progress.learnedWords.map(w => w.wordId));
+    return this.quranApi.getUnlearnedWords(ids);
+  }
+
+  getWordsLearnedToday(): number {
+    return this.progress.dailyHistory.find(d => d.date === this.todayStr())?.wordsLearned ?? 0;
+  }
+
+  async loadMoreWords(count = 20): Promise<number> {
+    return this.quranApi.fetchMoreWords(count);
+  }
+
+  /* ════════════════════════════════
+     Learning & streak
+  ════════════════════════════════ */
+
   markAsLearned(wordId: number): void {
-    const today = this.todayStr();
-    const existing = this.progress.learnedWords.find(w => w.wordId === wordId);
-    if (existing) return; // Already learned
+    if (this.isWordLearned(wordId)) return;
 
     const word = this.getWordById(wordId);
     if (!word) return;
 
-    const learned: LearnedWord = {
+    const today = this.todayStr();
+
+    this.progress.learnedWords.push({
       wordId,
       learnedDate: today,
       revisionDates: [],
       nextRevision: this.addDays(today, REVISION_INTERVALS[0]),
       revisionLevel: 0,
       quizScore: 0,
-    };
-
-    this.progress.learnedWords.push(learned);
+    });
     this.progress.totalLearned = this.progress.learnedWords.length;
     this.progress.totalFrequencyWeight += word.frequency;
 
-    // Update daily history
-    let dailyEntry = this.progress.dailyHistory.find(d => d.date === today);
-    if (!dailyEntry) {
-      dailyEntry = { date: today, wordsLearned: 0, wordIds: [] };
-      this.progress.dailyHistory.push(dailyEntry);
+    let daily = this.progress.dailyHistory.find(d => d.date === today);
+    if (!daily) {
+      daily = { date: today, wordsLearned: 0, wordIds: [] };
+      this.progress.dailyHistory.push(daily);
     }
-    dailyEntry.wordsLearned++;
-    dailyEntry.wordIds.push(wordId);
+    daily.wordsLearned++;
+    daily.wordIds.push(wordId);
 
-    // Update streak
     const yesterday = this.addDays(today, -1);
-    if (this.progress.lastLearnedDate === yesterday) {
-      this.progress.currentStreak++;
-    } else if (this.progress.lastLearnedDate !== today) {
-      this.progress.currentStreak = 1;
-    }
-    this.progress.lastLearnedDate = today;
+    if (this.progress.lastLearnedDate === yesterday) this.progress.currentStreak++;
+    else if (this.progress.lastLearnedDate !== today) this.progress.currentStreak = 1;
 
-    // Track best streak
+    this.progress.lastLearnedDate = today;
     if (this.progress.currentStreak > this.progress.bestStreak) {
       this.progress.bestStreak = this.progress.currentStreak;
     }
@@ -107,100 +95,83 @@ export class WordOfTheDayService {
   }
 
   /* ════════════════════════════════
-     Quiz System
+     Quiz
   ════════════════════════════════ */
+
   generateQuiz(wordId: number): QuizQuestion | null {
     const word = this.getWordById(wordId);
     if (!word) return null;
 
-    const otherWords = QURAN_WORDS.filter(w => w.id !== wordId);
-    const shuffled = this.shuffleArray([...otherWords]);
-    const wrongOptions = shuffled.slice(0, 3).map(w => ({
-      text: w.meaning, isCorrect: false
-    }));
-
-    const options: QuizOption[] = this.shuffleArray([
-      { text: word.meaning, isCorrect: true },
-      ...wrongOptions,
-    ]);
+    const distractors: QuizOption[] = this.quranApi.getAllWords()
+      .filter(w => w.id !== wordId)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3)
+      .map(w => ({ text: w.meaning, isCorrect: false }));
 
     return {
       wordId: word.id,
       word: word.word,
       question: `What does "${word.transliteration}" (${word.word}) mean?`,
-      options,
+      options: this.shuffle([{ text: word.meaning, isCorrect: true }, ...distractors]),
     };
   }
 
   recordQuizResult(wordId: number, correct: boolean): void {
-    const learned = this.progress.learnedWords.find(w => w.wordId === wordId);
-    if (learned) {
-      learned.quizScore = correct ? 1 : 0;
-    }
+    const lw = this.progress.learnedWords.find(w => w.wordId === wordId);
+    if (lw) lw.quizScore = correct ? 1 : 0;
     this.progress.quizAttempted++;
     if (correct) this.progress.quizCorrect++;
     this.saveProgress();
   }
 
   /* ════════════════════════════════
-     Spaced Repetition
+     Spaced repetition
   ════════════════════════════════ */
+
   getWordsForRevision(): RevisionWord[] {
     const today = this.todayStr();
-    const results: RevisionWord[] = [];
-
-    for (const lw of this.progress.learnedWords) {
-      if (lw.revisionLevel >= REVISION_INTERVALS.length) continue;
-      if (lw.nextRevision <= today) {
+    return this.progress.learnedWords
+      .filter(lw => lw.revisionLevel < REVISION_INTERVALS.length && lw.nextRevision <= today)
+      .reduce<RevisionWord[]>((acc, lw) => {
         const word = this.getWordById(lw.wordId);
-        if (!word) continue;
-        const daysSince = this.daysBetween(lw.learnedDate, today);
-        results.push({ word, learnedInfo: lw, daysSinceLearned: daysSince });
-      }
-    }
-    return results;
+        if (word) acc.push({ word, learnedInfo: lw, daysSinceLearned: this.daysBetween(lw.learnedDate, today) });
+        return acc;
+      }, []);
   }
 
   markRevisionDone(wordId: number, remembered: boolean): void {
     const today = this.todayStr();
-    const learned = this.progress.learnedWords.find(w => w.wordId === wordId);
-    if (!learned) return;
+    const lw = this.progress.learnedWords.find(w => w.wordId === wordId);
+    if (!lw) return;
 
-    learned.revisionDates.push(today);
-
+    lw.revisionDates.push(today);
     if (remembered) {
-      learned.revisionLevel++;
-      if (learned.revisionLevel < REVISION_INTERVALS.length) {
-        learned.nextRevision = this.addDays(today, REVISION_INTERVALS[learned.revisionLevel]);
-      } else {
-        learned.nextRevision = '9999-12-31'; // Mastered
-      }
+      lw.revisionLevel++;
+      lw.nextRevision = lw.revisionLevel < REVISION_INTERVALS.length
+        ? this.addDays(today, REVISION_INTERVALS[lw.revisionLevel])
+        : '9999-12-31';
     } else {
-      learned.revisionLevel = 0;
-      learned.nextRevision = this.addDays(today, REVISION_INTERVALS[0]);
+      lw.revisionLevel = 0;
+      lw.nextRevision = this.addDays(today, REVISION_INTERVALS[0]);
     }
-
     this.saveProgress();
   }
 
   /* ════════════════════════════════
-     Progress & Stats
+     Stats
   ════════════════════════════════ */
+
   getProgress(): WordProgress {
     const today = this.todayStr();
     const yesterday = this.addDays(today, -1);
-    if (this.progress.lastLearnedDate !== today && this.progress.lastLearnedDate !== yesterday) {
-      this.progress.currentStreak = 0;
-    }
+    const last = this.progress.lastLearnedDate;
+    if (last && last !== today && last !== yesterday) this.progress.currentStreak = 0;
     return { ...this.progress };
   }
 
   getUnderstandingPercentage(): number {
-    if (!this.progress.totalFrequencyWeight) return 0;
-    return Math.min(
-      Math.round((this.progress.totalFrequencyWeight / TOTAL_QURAN_WORD_FREQUENCY) * 100),
-      100
-    );
+    const total = this.quranApi.totalAvailable;
+    return total ? Math.min(Math.round((this.progress.totalLearned / total) * 100), 100) : 0;
   }
 
   getMasteredCount(): number {
@@ -208,102 +179,77 @@ export class WordOfTheDayService {
   }
 
   getQuizAccuracy(): number {
-    if (!this.progress.quizAttempted) return 0;
-    return Math.round((this.progress.quizCorrect / this.progress.quizAttempted) * 100);
+    return this.progress.quizAttempted
+      ? Math.round((this.progress.quizCorrect / this.progress.quizAttempted) * 100)
+      : 0;
   }
 
   getDailyAverage(): number {
-    const history = this.progress.dailyHistory;
-    if (!history.length) return 0;
-    const total = history.reduce((sum, d) => sum + d.wordsLearned, 0);
-    return Math.round((total / history.length) * 10) / 10;
+    const h = this.progress.dailyHistory;
+    if (!h.length) return 0;
+    return Math.round((h.reduce((s, d) => s + d.wordsLearned, 0) / h.length) * 10) / 10;
   }
 
-  getActiveDaysCount(): number {
-    return this.progress.dailyHistory.length;
-  }
+  getActiveDaysCount(): number { return this.progress.dailyHistory.length; }
 
-  /** Get last N days of learning history for chart display */
-  getRecentHistory(days: number = 7): DailyStats[] {
+  getRecentHistory(days = 7): DailyStats[] {
     const today = this.todayStr();
-    const result: DailyStats[] = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const date = this.addDays(today, -i);
-      const entry = this.progress.dailyHistory.find(d => d.date === date);
-      result.push(entry ?? { date, wordsLearned: 0, wordIds: [] });
-    }
-    return result;
+    return Array.from({ length: days }, (_, i) => {
+      const date = this.addDays(today, -(days - 1 - i));
+      return this.progress.dailyHistory.find(d => d.date === date)
+        ?? { date, wordsLearned: 0, wordIds: [] };
+    });
   }
 
   /* ════════════════════════════════
-     Private Helpers
+     Private helpers
   ════════════════════════════════ */
+
   private loadProgress(): WordProgress {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw);
-        // Migrate old data if missing new fields
+        const p = JSON.parse(raw);
         return {
-          totalLearned: parsed.totalLearned ?? 0,
-          currentStreak: parsed.currentStreak ?? 0,
-          bestStreak: parsed.bestStreak ?? parsed.currentStreak ?? 0,
-          lastLearnedDate: parsed.lastLearnedDate ?? '',
-          learnedWords: parsed.learnedWords ?? [],
-          totalFrequencyWeight: parsed.totalFrequencyWeight ?? 0,
-          dailyHistory: parsed.dailyHistory ?? [],
-          quizCorrect: parsed.quizCorrect ?? 0,
-          quizAttempted: parsed.quizAttempted ?? 0,
+          totalLearned: p.totalLearned ?? 0,
+          currentStreak: p.currentStreak ?? 0,
+          bestStreak: p.bestStreak ?? 0,
+          lastLearnedDate: p.lastLearnedDate ?? '',
+          learnedWords: p.learnedWords ?? [],
+          totalFrequencyWeight: p.totalFrequencyWeight ?? 0,
+          dailyHistory: p.dailyHistory ?? [],
+          quizCorrect: p.quizCorrect ?? 0,
+          quizAttempted: p.quizAttempted ?? 0,
         };
       }
     } catch { /* noop */ }
     return {
-      totalLearned: 0,
-      currentStreak: 0,
-      bestStreak: 0,
-      lastLearnedDate: '',
-      learnedWords: [],
-      totalFrequencyWeight: 0,
-      dailyHistory: [],
-      quizCorrect: 0,
-      quizAttempted: 0,
+      totalLearned: 0, currentStreak: 0, bestStreak: 0,
+      lastLearnedDate: '', learnedWords: [],
+      totalFrequencyWeight: 0, dailyHistory: [],
+      quizCorrect: 0, quizAttempted: 0,
     };
   }
 
   private saveProgress(): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.progress));
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.progress)); }
+    catch { /* quota exceeded */ }
   }
 
-  private todayStr(): string {
-    return new Date().toISOString().slice(0, 10);
+  private todayStr(): string { return new Date().toISOString().slice(0, 10); }
+  private addDays(d: string, n: number): string {
+    const dt = new Date(d); dt.setDate(dt.getDate() + n);
+    return dt.toISOString().slice(0, 10);
   }
-
-  private dateSeed(dateStr: string): number {
-    let hash = 0;
-    for (let i = 0; i < dateStr.length; i++) {
-      hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
-      hash |= 0;
-    }
-    return Math.abs(hash);
-  }
-
-  private addDays(dateStr: string, days: number): string {
-    const d = new Date(dateStr);
-    d.setDate(d.getDate() + days);
-    return d.toISOString().slice(0, 10);
-  }
-
   private daysBetween(a: string, b: string): number {
-    const da = new Date(a).getTime();
-    const db = new Date(b).getTime();
-    return Math.floor((db - da) / 86400000);
+    return Math.floor((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000);
   }
-
-  private shuffleArray<T>(arr: T[]): T[] {
-    for (let i = arr.length - 1; i > 0; i--) {
+  private shuffle<T>(arr: T[]): T[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
+      [a[i], a[j]] = [a[j], a[i]];
     }
-    return arr;
+    return a;
   }
 }

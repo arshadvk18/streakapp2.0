@@ -2,7 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WordOfTheDayService } from './word-of-the-day.service';
-import { QuranWord, QuizQuestion, RevisionWord, WordProgress, DailyStats } from './quran-word.model';
+import {
+  QuranWord, QuizQuestion, RevisionWord,
+  WordProgress, DailyStats,
+} from './quran-word.model';
 
 type ViewState = 'word' | 'explore' | 'quiz' | 'revision' | 'progress';
 
@@ -15,60 +18,99 @@ type ViewState = 'word' | 'explore' | 'quiz' | 'revision' | 'progress';
 })
 export class WordOfTheDayComponent implements OnInit {
 
-  Math = Math;
+  readonly Math = Math;
 
-  /* ─── State ─── */
+  /* ─── Loading / error ─── */
+  isLoading = true;
+  isLoadingMore = false;
+  loadError: string | null = null;
+
+  /* ─── View ─── */
   viewState: ViewState = 'word';
-  todayWord!: QuranWord;
+
+  /* ─── Core data ─── */
+  todayWord: QuranWord | null = null;
   progress!: WordProgress;
   understandingPct = 0;
+  totalAvailable = 0;
 
-  /* Word detail */
+  /* ─── Word-detail ─── */
   isWordLearned = false;
   showOccurrences = false;
   expandedOccurrence: number | null = null;
 
-  /* Quiz */
+  /* ─── Quiz ─── */
   quiz: QuizQuestion | null = null;
-  quizWordRef: QuranWord | null = null;  // Which word the quiz is about
+  quizWordRef: QuranWord | null = null;
   selectedAnswer: number | null = null;
   quizAnswered = false;
   quizCorrect = false;
 
-  /* Revision */
-  revisionWords: RevisionWord[] = [];;
+  /* ─── Revision ─── */
+  revisionWords: RevisionWord[] = [];
   currentRevisionIndex = 0;
   revisionRevealed = false;
 
-  /* Explore */
+  /* ─── Explore ─── */
   unlearnedWords: QuranWord[] = [];
   selectedExploreWord: QuranWord | null = null;
   exploreSearch = '';
   wordsLearnedToday = 0;
 
-  /* Stats */
+  /* ─── Stats ─── */
   masteredCount = 0;
   quizAccuracy = 0;
   dailyAverage = 0;
   activeDays = 0;
   recentHistory: DailyStats[] = [];
 
-  constructor(public wotdService: WordOfTheDayService) {}
+  constructor(public wotdService: WordOfTheDayService) { }
 
-  ngOnInit(): void {
-    this.todayWord = this.wotdService.getWordOfTheDay();
-    this.refreshAll();
+  /* ════════════════════════════════
+     Lifecycle
+  ════════════════════════════════ */
+
+  async ngOnInit(): Promise<void> {
+    await this.load();
+  }
+
+  /** Retry entry point — never call ngOnInit() directly from the template. */
+  async load(): Promise<void> {
+    this.isLoading = true;
+    this.loadError = null;
+
+    try {
+      await this.wotdService.initialize();
+      this.todayWord = this.wotdService.getWordOfTheDay();
+
+      if (!this.todayWord) {
+        throw new Error('No words available after initialization.');
+      }
+
+      this.refreshAll();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.loadError = msg.includes('No words')
+        ? msg
+        : "Could not load Qur'anic words. Please check your internet connection.";
+      console.error('[WordOfTheDay] Init error:', err);
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   /* ════════════════════════════════
-     Refresh helpers
+     Refresh
   ════════════════════════════════ */
+
   private refreshAll(): void {
     this.progress = this.wotdService.getProgress();
     this.understandingPct = this.wotdService.getUnderstandingPercentage();
-    this.isWordLearned = this.wotdService.isWordLearned(this.todayWord.id);
-    this.revisionWords = this.wotdService.getWordsForRevision();
+    this.totalAvailable = this.wotdService.getTotalAvailable();
+    this.isWordLearned = this.todayWord
+      ? this.wotdService.isWordLearned(this.todayWord.id) : false;
     this.unlearnedWords = this.wotdService.getUnlearnedWords();
+    this.revisionWords = this.wotdService.getWordsForRevision();
     this.wordsLearnedToday = this.wotdService.getWordsLearnedToday();
     this.masteredCount = this.wotdService.getMasteredCount();
     this.quizAccuracy = this.wotdService.getQuizAccuracy();
@@ -78,10 +120,12 @@ export class WordOfTheDayComponent implements OnInit {
   }
 
   /* ════════════════════════════════
-     View Navigation
+     View navigation
   ════════════════════════════════ */
+
   setView(view: ViewState): void {
     this.viewState = view;
+
     if (view === 'revision') {
       this.revisionWords = this.wotdService.getWordsForRevision();
       this.currentRevisionIndex = 0;
@@ -98,9 +142,11 @@ export class WordOfTheDayComponent implements OnInit {
   }
 
   /* ════════════════════════════════
-     Mark as Learned (Word of the Day)
+     Word of the Day
   ════════════════════════════════ */
+
   markLearned(): void {
+    if (!this.todayWord) return;
     this.wotdService.markAsLearned(this.todayWord.id);
     this.isWordLearned = true;
     this.quizWordRef = this.todayWord;
@@ -108,21 +154,36 @@ export class WordOfTheDayComponent implements OnInit {
     this.startQuiz(this.todayWord);
   }
 
+  toggleOccurrences(): void {
+    this.showOccurrences = !this.showOccurrences;
+  }
+
+  toggleOccurrenceDetail(index: number): void {
+    this.expandedOccurrence = this.expandedOccurrence === index ? null : index;
+  }
+
   /* ════════════════════════════════
-     Explore — Learn More Words
+     Explore
   ════════════════════════════════ */
+
   get filteredExploreWords(): QuranWord[] {
-    if (!this.exploreSearch.trim()) return this.unlearnedWords;
-    const q = this.exploreSearch.toLowerCase();
+    const q = this.exploreSearch.trim().toLowerCase();
+    if (!q) return this.unlearnedWords;
     return this.unlearnedWords.filter(w =>
       w.transliteration.toLowerCase().includes(q) ||
       w.meaning.toLowerCase().includes(q) ||
-      w.word.includes(this.exploreSearch)
+      w.word.includes(this.exploreSearch),
     );
   }
 
   selectExploreWord(word: QuranWord): void {
     this.selectedExploreWord = word;
+  }
+
+  backToExplore(): void {
+    this.selectedExploreWord = null;
+    this.refreshAll();
+    this.viewState = 'explore';
   }
 
   learnExploreWord(): void {
@@ -133,15 +194,23 @@ export class WordOfTheDayComponent implements OnInit {
     this.startQuiz(this.selectedExploreWord);
   }
 
-  backToExplore(): void {
-    this.selectedExploreWord = null;
-    this.refreshAll();
-    this.viewState = 'explore';
+  async loadMoreWords(): Promise<void> {
+    if (this.isLoadingMore) return;
+    this.isLoadingMore = true;
+    try {
+      await this.wotdService.loadMoreWords(20);
+      this.refreshAll();
+    } catch (err) {
+      console.error('[WordOfTheDay] Load more error:', err);
+    } finally {
+      this.isLoadingMore = false;
+    }
   }
 
   /* ════════════════════════════════
      Quiz
   ════════════════════════════════ */
+
   startQuiz(word: QuranWord): void {
     this.quiz = this.wotdService.generateQuiz(word.id);
     this.quizWordRef = word;
@@ -160,31 +229,17 @@ export class WordOfTheDayComponent implements OnInit {
     this.refreshAll();
   }
 
-  backToWord(): void {
-    this.viewState = 'word';
-  }
-
-  /* ════════════════════════════════
-     Occurrences
-  ════════════════════════════════ */
-  toggleOccurrences(): void {
-    this.showOccurrences = !this.showOccurrences;
-  }
-
-  toggleOccurrenceDetail(index: number): void {
-    this.expandedOccurrence = this.expandedOccurrence === index ? null : index;
-  }
+  backToWord(): void { this.viewState = 'word'; }
 
   /* ════════════════════════════════
      Revision
   ════════════════════════════════ */
+
   get currentRevision(): RevisionWord | null {
     return this.revisionWords[this.currentRevisionIndex] ?? null;
   }
 
-  revealRevision(): void {
-    this.revisionRevealed = true;
-  }
+  revealRevision(): void { this.revisionRevealed = true; }
 
   answerRevision(remembered: boolean): void {
     const rev = this.currentRevision;
@@ -199,11 +254,20 @@ export class WordOfTheDayComponent implements OnInit {
   }
 
   /* ════════════════════════════════
-     Helpers for template
+     Audio
   ════════════════════════════════ */
+
+  playAudio(url: string | undefined): void {
+    if (!url) return;
+    new Audio(url).play().catch(e => console.warn('Audio play failed:', e));
+  }
+
+  /* ════════════════════════════════
+     Template helpers
+  ════════════════════════════════ */
+
   getShortDay(dateStr: string): string {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en', { weekday: 'short' });
+    return new Date(dateStr).toLocaleDateString('en', { weekday: 'short' });
   }
 
   getMaxHistoryWords(): number {

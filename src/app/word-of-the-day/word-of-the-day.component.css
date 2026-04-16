@@ -1,732 +1,1758 @@
-/* ─────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════
    word-of-the-day.component.css
-   Midnight Gold · Islamic Theme
-───────────────────────────────────────── */
+   Midnight Gold · Qur'anic Vocabulary
+   Light / dark theme · Fixed layout & Arabic rendering
+   ═══════════════════════════════════════════════════════
 
-/* ─── Theme variables (inherits from app) ─── */
+   REQUIRED — add to your global styles.css or index.html <head>:
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+   ═══════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════
+   THEME VARIABLES
+   ═══════════════════════════════════════════════════════ */
 :host {
   display: block;
+
+  /* Dark (default) */
   --bg-root: #080c14;
   --bg-card: #0d1424;
   --bg-card-mid: #111c30;
   --bg-field: #060a10;
   --text-primary: #f5f0e8;
   --text-secondary: rgba(245, 240, 232, 0.65);
-  --text-muted: rgba(245, 240, 232, 0.35);
-  --text-faint: rgba(245, 240, 232, 0.08);
+  --text-muted: rgba(245, 240, 232, 0.38);
+  --text-faint: rgba(245, 240, 232, 0.07);
   --gold: #d4af37;
-  --gold-light: #f0d060;
   --gold-dim: rgba(212, 175, 55, 0.14);
-  --gold-border: rgba(212, 175, 55, 0.25);
-  --gold-glow: rgba(212, 175, 55, 0.35);
+  --gold-border: rgba(212, 175, 55, 0.26);
+  --gold-glow: rgba(212, 175, 55, 0.32);
   --card-border: rgba(212, 175, 55, 0.12);
   --card-shadow: rgba(0, 0, 0, 0.45);
   --emerald: #4ade80;
   --emerald-dark: #1a7a4a;
+  --danger: #f87171;
+  --warning: #f59e0b;
+  --progress-track: rgba(255, 255, 255, 0.06);
   --radius: 16px;
   --radius-sm: 10px;
+  --radius-xs: 7px;
 }
 
+/* Light mode */
 :host-context(html:not(.dark)) {
   --bg-root: #f5f0e6;
   --bg-card: #ffffff;
   --bg-card-mid: #faf7f0;
   --bg-field: #f0ebe0;
   --text-primary: #1a1208;
-  --text-secondary: rgba(26, 18, 8, 0.7);
-  --text-muted: rgba(26, 18, 8, 0.5);
+  --text-secondary: rgba(26, 18, 8, 0.70);
+  --text-muted: rgba(26, 18, 8, 0.48);
   --text-faint: rgba(26, 18, 8, 0.05);
   --gold: #a07820;
-  --gold-light: #c49020;
-  --gold-dim: rgba(160, 120, 32, 0.09);
-  --gold-border: rgba(160, 120, 32, 0.28);
-  --gold-glow: rgba(160, 120, 32, 0.2);
+  --gold-dim: rgba(160, 120, 32, 0.10);
+  --gold-border: rgba(160, 120, 32, 0.30);
+  --gold-glow: rgba(160, 120, 32, 0.22);
   --card-border: rgba(160, 120, 32, 0.16);
-  --card-shadow: rgba(160, 120, 32, 0.08);
+  --card-shadow: rgba(160, 120, 32, 0.10);
   --emerald: #166534;
   --emerald-dark: #166534;
+  --danger: #b91c1c;
+  --warning: #92400e;
+  --progress-track: rgba(26, 18, 8, 0.07);
 }
 
-/* ─── Root ─── */
+/* ═══════════════════════════════════════════════════════
+   ARABIC FONT HELPER
+   Apply to ANY element that contains Arabic text.
+   Rules:
+   • font-family  — Amiri (Qur'anic), Noto Naskh (fallback)
+   • direction    — rtl  (right-to-left)
+   • letter-spacing: 0   — CRITICAL: positive spacing breaks Arabic ligatures
+   • line-height  — 1.7+ — harakat (diacritics) sit above/below the baseline
+   ═══════════════════════════════════════════════════════ */
+.ar {
+  font-family: 'Amiri', 'Noto Naskh Arabic', 'Traditional Arabic', serif;
+  direction: rtl;
+  unicode-bidi: bidi-override;
+  letter-spacing: 0 !important;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "rlig" 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ═══════════════════════════════════════════════════════
+   ROOT & PAGE LAYOUT
+   ═══════════════════════════════════════════════════════ */
 .wotd-root {
   position: relative;
   min-height: 100vh;
   background: var(--bg-root);
-  padding: 0 0 80px;
+  /* 16px padding top removed — header handles its own top padding */
+  padding-bottom: 80px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 16px;
+  /* ← consistent vertical rhythm between ALL children */
   overflow-x: hidden;
   font-family: 'Lato', sans-serif;
   color: var(--text-primary);
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background 0.3s, color 0.3s;
 }
 
-.arabesque-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-.arabesque-svg { width: 100%; height: 100%; }
-:host-context(html:not(.dark)) .arabesque-bg { opacity: 0.45; }
-.wotd-root > *:not(.arabesque-bg) { position: relative; z-index: 1; }
+/* Arabesque BG */
+.arabesque-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
 
-/* ─── Header ─── */
+.arabesque-svg {
+  width: 100%;
+  height: 100%;
+}
+
+:host-context(html:not(.dark)) .arabesque-bg {
+  opacity: 0.4;
+}
+
+.wotd-root>*:not(.arabesque-bg) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ═══════════════════════════════════════════════════════
+   HEADER
+   ═══════════════════════════════════════════════════════ */
 .wotd-header {
-  width: 100%; text-align: center;
-  padding: 52px 16px 20px; max-width: 640px;
+  width: 100%;
+  max-width: 640px;
+  text-align: center;
+  padding: 48px 16px 8px;
 }
 
 .header-ornament {
-  display: flex; align-items: center; justify-content: center;
-  gap: 10px; margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 14px;
 }
+
 .ornament-line {
-  flex: 1; max-width: 80px; height: 1px;
+  flex: 1;
+  max-width: 80px;
+  height: 1px;
   background: linear-gradient(to right, transparent, var(--gold));
 }
-.ornament-line:last-child { background: linear-gradient(to left, transparent, var(--gold)); }
-.ornament-diamond { color: var(--gold); font-size: 0.7rem; }
-.ornament-diamond.small { font-size: 0.55rem; }
 
-.wotd-title { display: flex; flex-direction: column; gap: 4px; margin: 0; }
-.title-arabic {
-  font-family: 'Noto Naskh Arabic', serif;
-  font-size: 1.8rem; font-weight: 700; color: var(--gold);
-  text-shadow: 0 0 28px var(--gold-glow); direction: rtl;
+.ornament-line:last-child {
+  background: linear-gradient(to left, transparent, var(--gold));
 }
+
+.ornament-diamond {
+  color: var(--gold);
+  font-size: 0.70rem;
+}
+
+.ornament-diamond.small {
+  color: var(--gold);
+  font-size: 0.52rem;
+}
+
+/* Title — stacked vertically */
+.wotd-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.title-arabic {
+  /* Arabic font via .ar helper — size override here */
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1.7;
+  text-shadow: 0 0 28px var(--gold-glow);
+  display: block;
+}
+
 .title-eng {
   font-family: 'Cinzel Decorative', serif;
-  font-size: 0.95rem; font-weight: 400; color: var(--text-secondary);
-  letter-spacing: 0.12em; text-transform: uppercase;
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  display: block;
 }
 
-/* ─── Progress strip ─── */
+/* ═══════════════════════════════════════════════════════
+   LOADING STATE
+   ═══════════════════════════════════════════════════════ */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 72px 24px;
+  text-align: center;
+}
+
+.loading-spinner {
+  position: relative;
+  width: 48px;
+  height: 48px;
+}
+
+.spinner-ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid transparent;
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+.spinner-ring.delay {
+  inset: 8px;
+  border-top-color: rgba(212, 175, 55, 0.35);
+  animation-delay: 0.3s;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  color: var(--gold);
+  margin: 0;
+}
+
+.loading-subtext {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════════
+   ERROR STATE
+   ═══════════════════════════════════════════════════════ */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 60px 24px;
+  text-align: center;
+  max-width: 380px;
+}
+
+.error-icon {
+  font-size: 2rem;
+}
+
+.error-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  color: var(--gold);
+  margin: 0;
+}
+
+.error-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.65;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PROGRESS STRIP
+   ═══════════════════════════════════════════════════════ */
 .progress-strip {
-  display: flex; align-items: center; justify-content: center;
-  width: calc(100% - 32px); max-width: 560px;
-  background: var(--bg-card); border: 1px solid var(--gold-border);
-  border-radius: var(--radius); padding: 14px 20px;
-  box-shadow: 0 2px 16px var(--card-shadow); margin-bottom: 16px;
+  width: calc(100% - 32px);
+  max-width: 560px;
+  display: flex;
+  align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  box-shadow: 0 2px 16px var(--card-shadow);
+  /* no margin — wotd-root gap handles spacing */
 }
-.progress-stat { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+
+.progress-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
 .progress-stat__num {
-  font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700;
-  color: var(--gold); line-height: 1;
+  font-family: 'Cinzel', serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
 }
+
 .progress-stat__lbl {
-  font-size: 0.58rem; font-weight: 600; color: var(--text-muted);
-  letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap;
+  font-size: 0.57rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
-.progress-divider { font-size: 0.4rem; color: var(--gold-border); padding: 0 10px; }
 
-/* ─── Sub nav ─── */
+.progress-divider {
+  font-size: 0.42rem;
+  color: var(--gold-border);
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════
+   API BADGE
+   ═══════════════════════════════════════════════════════ */
+.api-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 14px;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  border-radius: 999px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.60rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+}
+
+.api-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--emerald);
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(0.82);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   SUB-NAV TABS
+   ═══════════════════════════════════════════════════════ */
 .sub-nav {
-  display: flex; gap: 6px; width: calc(100% - 32px); max-width: 560px;
-  background: var(--bg-card); border: 1px solid var(--gold-border);
-  border-radius: var(--radius); padding: 5px; margin-bottom: 20px;
-  box-shadow: 0 2px 12px var(--card-shadow);
+  width: calc(100% - 32px);
+  max-width: 560px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius);
+  padding: 5px;
+  gap: 4px;
+  box-shadow: 0 4px 24px var(--card-shadow);
 }
+
 .sub-nav-btn {
-  flex: 1; position: relative; padding: 10px 8px;
-  background: transparent; border: none; border-radius: calc(var(--radius) - 6px);
-  color: var(--text-muted); font-family: 'Cinzel', serif;
-  font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em;
-  text-transform: uppercase; cursor: pointer;
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 4px;
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius) - 7px);
+  color: var(--text-muted);
+  font-family: 'Cinzel', serif;
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
 }
-.sub-nav-btn:hover { background: var(--gold-dim); color: var(--gold); }
+
+.sub-nav-btn:hover {
+  background: var(--gold-dim);
+  color: var(--gold);
+}
+
 .sub-nav-btn.active {
-  background: linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.08));
-  color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold-border);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0.08));
+  color: var(--gold);
+  box-shadow: inset 0 0 0 1px var(--gold-border);
 }
+
+.explore-count,
 .rev-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 16px; height: 16px; background: #f87171; color: #fff;
-  border-radius: 50%; font-size: 0.5rem; font-weight: 700;
-  margin-left: 4px; font-family: 'Lato', sans-serif;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  background: var(--gold);
+  color: var(--bg-root);
+  border-radius: 999px;
+  font-size: 0.50rem;
+  font-weight: 700;
+  font-family: 'Lato', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
-/* ─── View content ─── */
+:host-context(html:not(.dark)) .explore-count,
+:host-context(html:not(.dark)) .rev-badge {
+  color: #f5f0e8;
+}
+
+/* ═══════════════════════════════════════════════════════
+   VIEW CONTENT WRAPPER
+   ═══════════════════════════════════════════════════════ */
 .view-content {
-  width: 100%; max-width: 560px; padding: 0 16px;
-  display: flex; flex-direction: column; gap: 16px;
-  animation: fadeSlide 0.28s ease forwards;
-}
-@keyframes fadeSlide {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  width: calc(100% - 32px);
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeUp 0.26s ease forwards;
+  /* bottom padding so last card isn't clipped */
+  padding-bottom: 8px;
 }
 
-/* ════════════════════════════════
-   WORD CARD
-════════════════════════════════ */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   WORD CARD  (main word display)
+   ═══════════════════════════════════════════════════════ */
 .word-card {
-  position: relative; background: var(--bg-card);
-  border: 1px solid var(--gold-border); border-radius: var(--radius);
-  padding: 32px 24px 24px; text-align: center;
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius);
+  padding: 28px 24px 24px;
+
+  /* ← FIX: flex column so every child stacks vertically and centres */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  position: relative;
+  overflow: hidden;
   box-shadow: 0 8px 40px var(--card-shadow);
-  overflow: hidden; transition: border-color 0.25s, box-shadow 0.25s;
+  transition: border-color 0.25s, box-shadow 0.25s;
 }
-.word-card:hover { border-color: var(--gold); box-shadow: 0 12px 48px var(--gold-glow); }
 
+.word-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 12px 48px var(--gold-glow);
+}
+
+/* Thin gold line at the very top of the card */
 .word-card-glow {
-  position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
-  width: 200px; height: 120px;
-  background: radial-gradient(ellipse, var(--gold-glow), transparent 70%);
-  filter: blur(40px); pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
 }
 
-.word-arabic-wrap { margin-bottom: 12px; }
+/* "Word of the Day" tag — block so it sits on its own line */
+.wotd-tag {
+  display: block;
+  /* ← FIX: was inline-block, now forces its own line */
+  width: fit-content;
+  margin: 0 auto 20px;
+  /* centred via auto margins */
+  padding: 4px 16px;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  border-radius: 999px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.60rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+/* ── Arabic word wrapper ── */
+.word-arabic-wrap {
+  /* ← FIX: width: fit-content + align-self:center inside flex-column */
+  width: fit-content;
+  max-width: 100%;
+  align-self: center;
+  padding: 18px 32px;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 18px;
+}
+
+/* ── Main Arabic word ── */
 .word-arabic {
-  font-family: 'Noto Naskh Arabic', serif;
-  font-size: 3.2rem; font-weight: 700; color: var(--gold);
-  text-shadow: 0 0 32px var(--gold-glow); direction: rtl;
-  line-height: 1.4;
+  /* All Arabic font rules via .ar class — size + colour here */
+  font-size: 3.2rem;
+  font-weight: 700;
+  line-height: 1.8;
+  /* must be high — harakat sit above/below baseline */
+  color: var(--gold);
+  text-shadow: 0 0 24px var(--gold-glow);
+  display: block;
+  text-align: center;
+  min-width: 80px;
 }
 
-.word-translit {
-  font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 600;
-  color: var(--text-secondary); letter-spacing: 0.1em;
-  text-transform: uppercase; margin: 0 0 6px;
-}
-.word-meaning {
-  font-size: 1.2rem; font-weight: 500; color: var(--gold-light);
-  margin: 0 0 20px; font-style: italic;
-}
-
-/* Meta chips */
-.word-meta-row {
-  display: flex; justify-content: center; gap: 12px;
-  flex-wrap: wrap; margin-bottom: 22px;
-}
-.word-meta-chip {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  background: var(--bg-card-mid); border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm); padding: 10px 18px;
-}
-.meta-label {
-  font-size: 0.58rem; font-weight: 600; color: var(--text-muted);
-  letter-spacing: 0.1em; text-transform: uppercase;
-}
-.meta-value { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); }
-.meta-arabic {
-  font-family: 'Noto Naskh Arabic', serif;
-  font-size: 1.1rem; direction: rtl; color: var(--gold);
+/* ── Audio button ── */
+.audio-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-bottom: 14px;
+  transition: background 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
 }
 
-/* Learn button */
-.learn-btn { width: 100%; padding: 14px 24px; font-size: 0.9rem; }
-
-.btn-primary {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 12px 24px; background: linear-gradient(135deg, var(--gold), var(--gold-light));
-  border: none; border-radius: var(--radius-sm); color: #080c14;
-  font-family: 'Cinzel', serif; font-size: 0.78rem; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
-  box-shadow: 0 4px 16px var(--gold-glow);
-  transition: transform 0.15s, box-shadow 0.2s;
-}
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px var(--gold-glow); }
-.btn-primary:active { transform: scale(0.97); }
-
-.btn-ghost {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 10px 20px; background: transparent;
-  border: 1px solid var(--gold-border); border-radius: var(--radius-sm);
-  color: var(--gold); font-family: 'Cinzel', serif;
-  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em;
-  cursor: pointer; transition: background 0.2s, border-color 0.2s;
-}
-.btn-ghost:hover { background: var(--gold-dim); border-color: var(--gold); }
-
-.btn-ghost-sm {
-  background: transparent; border: none; color: var(--gold);
-  font-family: 'Cinzel', serif; font-size: 0.68rem; font-weight: 600;
-  cursor: pointer; text-decoration: underline; padding: 4px 0;
+.audio-btn:hover {
+  background: rgba(212, 175, 55, 0.24);
+  box-shadow: 0 0 14px var(--gold-glow);
 }
 
-/* Learned badge */
-.learned-badge {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 14px; background: rgba(74, 222, 128, 0.1);
-  border: 1px solid rgba(74, 222, 128, 0.25); border-radius: var(--radius-sm);
-  color: var(--emerald); font-family: 'Cinzel', serif;
-  font-size: 0.85rem; font-weight: 700;
+/* ── Root badge ── */
+.root-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  margin-bottom: 14px;
+  background: var(--text-faint);
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
 }
 
-/* ════════════════════════════════
-   SECTION CARD (Forms, Occurrences)
-════════════════════════════════ */
-.section-card {
-  background: var(--bg-card); border: 1px solid var(--card-border);
-  border-radius: var(--radius); padding: 20px;
-  box-shadow: 0 2px 12px var(--card-shadow);
-}
-.section-title-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
-.section-title {
-  font-family: 'Cinzel', serif; font-size: 0.82rem; font-weight: 700;
-  color: var(--gold); margin: 0; letter-spacing: 0.1em; text-transform: uppercase;
+.root-badge-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  flex-shrink: 0;
 }
 
-/* Word forms */
-.forms-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr);
-  gap: 10px; margin-top: 16px;
-}
-.form-chip {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  background: var(--bg-card-mid); border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm); padding: 14px 10px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.form-chip:hover { border-color: var(--gold-border); box-shadow: 0 2px 12px var(--gold-glow); }
-.form-word {
-  font-family: 'Noto Naskh Arabic', serif;
-  font-size: 1.3rem; font-weight: 700; color: var(--gold); direction: rtl;
-}
-.form-meaning { font-size: 0.72rem; color: var(--text-secondary); font-weight: 500; }
-
-/* Occurrences */
-.section-toggle {
-  width: 100%; display: flex; align-items: center; justify-content: space-between;
-  background: none; border: none; color: inherit; cursor: pointer; padding: 0;
-}
-.toggle-icon {
-  color: var(--gold); font-size: 1rem;
-  transition: transform 0.2s; display: inline-block;
-}
-.toggle-icon.open { transform: rotate(180deg); }
-
-.occurrences-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
-.occurrence-item {
-  background: var(--bg-card-mid); border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
-}
-.occurrence-item:hover { border-color: var(--gold-border); }
-.occ-header { display: flex; align-items: center; justify-content: space-between; }
-.occ-ref {
-  font-family: 'Cinzel', serif; font-size: 0.72rem; font-weight: 600;
-  color: var(--gold); letter-spacing: 0.06em;
-}
-.occ-expand {
-  color: var(--text-muted); font-size: 0.8rem;
-  transition: transform 0.2s; display: inline-block;
-}
-.occ-expand.open { transform: rotate(180deg); }
-.occ-detail { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--text-faint); }
-.occ-arabic {
-  font-family: 'Noto Naskh Arabic', serif;
-  font-size: 1.1rem; color: var(--text-primary); direction: rtl;
-  text-align: right; line-height: 2;
-}
-
-/* ════════════════════════════════
-   QUIZ
-════════════════════════════════ */
-.quiz-card {
-  background: var(--bg-card); border: 1px solid var(--gold-border);
-  border-radius: var(--radius); padding: 28px 24px;
-  box-shadow: 0 8px 36px var(--card-shadow); text-align: center;
-}
-.quiz-header { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px; }
-.quiz-icon { font-size: 1.6rem; }
-.quiz-title {
-  font-family: 'Cinzel', serif; font-size: 0.92rem; font-weight: 700;
-  color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase; margin: 0;
-}
-.quiz-question {
-  font-size: 1rem; color: var(--text-primary); margin: 0 0 22px;
+.root-badge-value {
+  /* Arabic root letters */
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--gold);
   line-height: 1.5;
 }
 
-.quiz-options { display: flex; flex-direction: column; gap: 10px; }
-.quiz-option {
-  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
-  background: var(--bg-card-mid); border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm); cursor: pointer;
-  font-size: 0.88rem; color: var(--text-primary); text-align: left;
-  transition: border-color 0.2s, background 0.2s, transform 0.15s;
-}
-.quiz-option:hover:not(:disabled) { border-color: var(--gold-border); transform: translateX(4px); }
-.quiz-option:disabled { cursor: default; }
-.quiz-option.correct {
-  border-color: var(--emerald) !important;
-  background: rgba(74, 222, 128, 0.1) !important;
-}
-.quiz-option.wrong {
-  border-color: #f87171 !important;
-  background: rgba(248, 113, 113, 0.1) !important;
+/* ── Transliteration & meaning ── */
+.word-translit {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 8px;
+  letter-spacing: 0.04em;
 }
 
-.opt-letter {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: var(--gold-dim); border: 1px solid var(--gold-border);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Cinzel', serif; font-size: 0.7rem; font-weight: 700;
-  color: var(--gold); flex-shrink: 0;
-}
-.opt-text { flex: 1; }
-.opt-icon { font-size: 1rem; font-weight: 700; flex-shrink: 0; }
-.opt-icon.wrong { color: #f87171; }
-
-.quiz-feedback { margin-top: 22px; }
-.feedback-correct {
-  font-size: 1rem; font-weight: 600; color: var(--emerald);
-  margin: 0 0 16px; padding: 12px; border-radius: var(--radius-sm);
-  background: rgba(74, 222, 128, 0.1);
-}
-.feedback-wrong {
-  font-size: 1rem; font-weight: 600; color: #f87171;
-  margin: 0 0 16px; padding: 12px; border-radius: var(--radius-sm);
-  background: rgba(248, 113, 113, 0.1);
+.word-meaning {
+  font-size: 1.1rem;
+  font-style: italic;
+  line-height: 1.7;
+  color: var(--text-primary);
+  margin: 0 0 20px;
 }
 
-/* ════════════════════════════════
-   REVISION
-════════════════════════════════ */
-.revision-card {
-  background: var(--bg-card); border: 1px solid var(--gold-border);
-  border-radius: var(--radius); padding: 28px 24px;
-  box-shadow: 0 8px 36px var(--card-shadow); text-align: center;
-}
-.rev-header {
-  display: flex; align-items: center; justify-content: space-between;
+/* ── Meta chips row ── */
+.word-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
   margin-bottom: 20px;
 }
-.rev-label {
-  font-family: 'Cinzel', serif; font-size: 0.72rem; font-weight: 700;
-  color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase;
-}
-.rev-counter { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; }
-.rev-prompt { font-size: 0.88rem; color: var(--text-secondary); margin: 0 0 16px; }
-.rev-arabic {
-  font-family: 'Noto Naskh Arabic', serif;
-  font-size: 2.8rem; font-weight: 700; color: var(--gold);
-  text-shadow: 0 0 24px var(--gold-glow); direction: rtl; margin: 0 0 8px;
-}
-.rev-translit {
-  font-family: 'Cinzel', serif; font-size: 0.92rem; color: var(--text-muted);
-  letter-spacing: 0.1em; margin: 0 0 20px;
-}
-.rev-action-wrap { margin-top: 8px; }
-.rev-reveal { margin-top: 16px; }
-.rev-meaning {
-  font-size: 1.2rem; font-weight: 600; color: var(--gold-light);
-  font-style: italic; margin: 0 0 8px;
-}
-.rev-days { font-size: 0.72rem; color: var(--text-muted); margin: 0 0 18px; }
-.rev-buttons { display: flex; gap: 10px; justify-content: center; }
-.btn-remember {
-  padding: 12px 22px; background: rgba(74, 222, 128, 0.15);
-  border: 1px solid rgba(74, 222, 128, 0.3); border-radius: var(--radius-sm);
-  color: var(--emerald); font-family: 'Cinzel', serif;
-  font-size: 0.72rem; font-weight: 700; cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
-}
-.btn-remember:hover { background: rgba(74, 222, 128, 0.25); transform: translateY(-1px); }
-.btn-forgot {
-  padding: 12px 22px; background: rgba(248, 113, 113, 0.12);
-  border: 1px solid rgba(248, 113, 113, 0.25); border-radius: var(--radius-sm);
-  color: #f87171; font-family: 'Cinzel', serif;
-  font-size: 0.72rem; font-weight: 700; cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
-}
-.btn-forgot:hover { background: rgba(248, 113, 113, 0.2); transform: translateY(-1px); }
 
-/* ════════════════════════════════
-   PROGRESS VIEW
-════════════════════════════════ */
-.progress-card {
-  background: var(--bg-card); border: 1px solid var(--gold-border);
-  border-radius: var(--radius); padding: 24px;
-  box-shadow: 0 6px 28px var(--card-shadow);
-}
-.progress-stats-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 10px; margin-top: 18px;
-}
-.prog-stat-card {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  background: var(--bg-card-mid); border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm); padding: 16px 10px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.prog-stat-card:hover { border-color: var(--gold); box-shadow: 0 4px 16px var(--gold-glow); }
-.prog-icon { font-size: 1.2rem; }
-.prog-num {
-  font-family: 'Cinzel', serif; font-size: 1.5rem; font-weight: 700;
-  color: var(--gold); line-height: 1;
-}
-.prog-lbl {
-  font-size: 0.58rem; font-weight: 600; color: var(--text-muted);
-  letter-spacing: 0.08em; text-transform: uppercase;
-}
-
-/* Understanding bar */
-.understanding-wrap { margin-top: 22px; }
-.understanding-label {
-  font-family: 'Cinzel', serif; font-size: 0.72rem; font-weight: 600;
-  color: var(--text-secondary); letter-spacing: 0.06em; margin: 0 0 8px;
-}
-.understanding-bar {
-  height: 8px; background: rgba(255, 255, 255, 0.06);
-  border-radius: 999px; overflow: hidden;
-}
-.understanding-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--emerald-dark), var(--gold), var(--gold-light));
+.word-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--text-faint);
+  border: 1px solid var(--card-border);
   border-radius: 999px;
-  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-  min-width: 0;
-}
-.understanding-note {
-  font-size: 0.62rem; color: var(--text-muted); margin: 6px 0 0;
-  font-style: italic;
 }
 
-/* Learned words list */
-.learned-list-wrap { margin-top: 22px; }
-.learned-list-title {
-  font-family: 'Cinzel', serif; font-size: 0.76rem; font-weight: 700;
-  color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase;
-  margin: 0 0 12px;
-}
-.learned-list { display: flex; flex-direction: column; gap: 8px; }
-.learned-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 14px; background: var(--bg-card-mid);
-  border: 1px solid var(--card-border); border-radius: var(--radius-sm);
-}
-.li-arabic {
-  font-family: 'Noto Naskh Arabic', serif;
-  font-size: 1.1rem; font-weight: 700; color: var(--gold);
-  direction: rtl; min-width: 60px; text-align: center;
-}
-.li-meaning { flex: 1; font-size: 0.8rem; color: var(--text-secondary); }
-.li-level {
-  font-size: 0.62rem; font-weight: 600; color: var(--text-muted);
-  padding: 3px 8px; background: var(--gold-dim);
-  border: 1px solid var(--gold-border); border-radius: 999px;
-  white-space: nowrap;
-}
-.li-level.mastered {
-  color: var(--emerald); background: rgba(74, 222, 128, 0.1);
-  border-color: rgba(74, 222, 128, 0.25);
+.meta-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  text-transform: uppercase;
 }
 
-/* ─── Empty state ─── */
-.empty-state {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 12px; padding: 48px 24px; text-align: center;
-}
-.empty-icon-lg { font-size: 2.5rem; }
-.empty-title {
-  font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700;
-  color: var(--text-secondary); margin: 0;
-}
-.empty-subtitle {
-  font-size: 0.85rem; color: var(--text-muted); margin: 0;
-  max-width: 280px; line-height: 1.6;
+.meta-value {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
 }
 
-/* ─── WOTD Tag ─── */
-.wotd-tag {
-  display: inline-block; margin-bottom: 12px;
-  padding: 4px 14px; background: var(--gold-dim);
-  border: 1px solid var(--gold-border); border-radius: 999px;
-  font-family: 'Cinzel', serif; font-size: 0.58rem; font-weight: 700;
-  color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase;
-}
-
-/* ─── Explore CTA card ─── */
-.explore-cta-card {
-  background: var(--bg-card); border: 1px solid var(--gold-border);
-  border-radius: var(--radius); padding: 22px;
-  text-align: center; box-shadow: 0 2px 12px var(--card-shadow);
-}
-.explore-cta-text {
-  font-size: 0.85rem; color: var(--text-secondary);
-  margin: 0 0 14px; line-height: 1.5;
-}
-
-/* ─── Explore count badge ─── */
-.explore-count {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 18px; height: 16px; padding: 0 4px;
-  background: var(--gold); color: var(--bg-root);
-  border-radius: 999px; font-size: 0.48rem; font-weight: 700;
-  margin-left: 4px; font-family: 'Lato', sans-serif;
-}
-
-/* ════════════════════════════════
-   EXPLORE VIEW
-════════════════════════════════ */
-.explore-header-card {
-  background: var(--bg-card); border: 1px solid var(--gold-border);
-  border-radius: var(--radius); padding: 20px;
-  box-shadow: 0 2px 12px var(--card-shadow); text-align: center;
-}
-.explore-subtitle {
-  font-size: 0.78rem; color: var(--text-muted);
-  margin: 8px 0 16px; font-weight: 500;
-}
-
-/* Search */
-.search-wrap {
-  position: relative; width: 100%;
-}
-.search-icon {
-  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-  width: 16px; height: 16px; color: var(--text-muted);
-  pointer-events: none;
-}
-.search-input {
-  width: 100%; padding: 12px 16px 12px 40px;
-  background: var(--bg-field); border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm); color: var(--text-primary);
-  font-family: 'Lato', sans-serif; font-size: 0.85rem;
-  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
-  box-sizing: border-box;
-}
-.search-input::placeholder { color: var(--text-muted); }
-.search-input:focus {
-  border-color: var(--gold-border);
-  box-shadow: 0 0 0 3px var(--gold-dim);
-}
-
-/* Explore word grid */
-.explore-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-.explore-word-card {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 16px 12px; background: var(--bg-card);
-  border: 1px solid var(--card-border); border-radius: var(--radius-sm);
-  cursor: pointer; text-align: center;
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-}
-.explore-word-card:hover {
-  border-color: var(--gold-border);
-  box-shadow: 0 4px 16px var(--gold-glow);
-  transform: translateY(-2px);
-}
-.ew-arabic {
-  font-family: 'Noto Naskh Arabic', serif;
-  font-size: 1.5rem; font-weight: 700; color: var(--gold);
-  direction: rtl; line-height: 1.3;
-}
-.ew-translit {
-  font-family: 'Cinzel', serif; font-size: 0.62rem; font-weight: 600;
-  color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase;
-}
-.ew-meaning {
-  font-size: 0.72rem; color: var(--text-secondary); font-weight: 500;
-}
-.ew-freq {
-  font-size: 0.58rem; color: var(--text-muted); font-weight: 600;
-  padding: 2px 8px; background: var(--gold-dim);
-  border: 1px solid var(--gold-border); border-radius: 999px;
-}
-
-/* Back button */
-.back-btn { align-self: flex-start; margin-bottom: 4px; }
-
-/* Quiz next actions */
-.quiz-next-actions {
-  display: flex; gap: 10px; justify-content: center;
+/* ── Learned badge ── */
+.learned-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-/* ════════════════════════════════
-   ENHANCED PROGRESS
-════════════════════════════════ */
-
-/* Understanding header */
-.understanding-header {
-  display: flex; align-items: baseline; justify-content: space-between;
-  margin-bottom: 8px;
-}
-.understanding-pct {
-  font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700;
-  color: var(--gold); margin: 0;
+.learned-badge>span {
+  font-size: 0.9rem;
+  color: var(--emerald);
+  font-weight: 600;
 }
 
-/* 7-day history chart */
-.history-chart-wrap {
-  margin-top: 22px; padding: 18px;
-  background: var(--bg-card-mid); border: 1px solid var(--card-border);
+/* ═══════════════════════════════════════════════════════
+   SECTION CARD  (shared by forms, occurrences, etc.)
+   ═══════════════════════════════════════════════════════ */
+.section-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: 0 4px 20px var(--card-shadow);
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.80rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin: 0;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.section-subtitle {
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 5px 0 14px;
+  font-style: italic;
+}
+
+/* Section toggle (occurrences accordion) */
+.section-toggle {
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--card-border);
+  margin-bottom: 2px;
+}
+
+.toggle-icon {
+  color: var(--gold);
+  font-size: 1rem;
+  transition: transform 0.22s;
+  flex-shrink: 0;
+}
+
+.toggle-icon.open {
+  transform: rotate(180deg);
+}
+
+/* ── Word Forms grid ── */
+.forms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.form-chip {
+  background: var(--bg-card-mid);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
+  padding: 12px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
+
+.form-chip:hover {
+  border-color: var(--gold-border);
+  box-shadow: 0 4px 16px var(--gold-glow);
+}
+
+.form-word {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--gold);
+  line-height: 1.7;
+  display: block;
+  text-align: center;
+}
+
+.form-meaning {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* Forms loading / empty state */
+.forms-pending {
+  text-align: center;
+  padding: 16px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.forms-pending-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--gold-border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.forms-pending p {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+.forms-empty {
+  text-align: center;
+  padding: 14px 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ── Qur'an Occurrences ── */
+.occurrences-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.occurrence-item {
+  background: var(--bg-card-mid);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.occurrence-item:hover {
+  border-color: var(--gold-border);
+}
+
+.occ-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.occ-ref {
+  font-family: 'Cinzel', serif;
+  font-size: 0.70rem;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.occ-expand {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  transition: transform 0.2s;
+}
+
+.occ-expand.open {
+  transform: rotate(180deg);
+}
+
+.occ-detail {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--card-border);
+}
+
+.occ-arabic {
+  /* Verse Arabic text */
+  font-size: 1.2rem;
+  font-weight: 400;
+  line-height: 2.0;
+  color: var(--text-primary);
+  text-align: right;
+  margin: 0;
+}
+
+/* Explore CTA after learning */
+.explore-cta-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius);
+  padding: 22px 20px;
+  text-align: center;
+}
+
+.explore-cta-text {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin: 0 0 14px;
+  line-height: 1.65;
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXPLORE VIEW
+   ═══════════════════════════════════════════════════════ */
+.explore-header-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.explore-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 6px 0 16px;
+}
+
+.search-wrap {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  fill: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 14px 10px 36px;
+  background: var(--bg-field);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Lato', sans-serif;
+  font-size: 0.88rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-dim);
+}
+
+.explore-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.explore-word-card {
+  background: var(--bg-card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.18s;
+}
+
+.explore-word-card:hover {
+  border-color: var(--gold-border);
+  box-shadow: 0 6px 22px var(--gold-glow);
+  transform: translateY(-2px);
+}
+
+.ew-arabic {
+  /* Arabic word in explore card */
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: var(--gold);
+  line-height: 1.7;
+  display: block;
+}
+
+.ew-translit {
+  font-family: 'Cinzel', serif;
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}
+
+.ew-meaning {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.ew-freq {
+  font-family: 'Cinzel', serif;
+  font-size: 0.55rem;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
+
+.back-btn {
+  align-self: flex-start;
+}
+
+.load-more-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+}
+
+.load-more-text {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin: 0 0 14px;
+  line-height: 1.65;
+}
+
+.load-more-note {
+  font-size: 0.70rem;
+  color: var(--text-muted);
+  margin: 8px 0 0;
+}
+
+.load-more-btn {
+  width: 100%;
+}
+
+.load-more-bottom {
+  display: flex;
+  justify-content: center;
+}
+
+.load-more-bottom .load-more-btn {
+  width: auto;
+}
+
+.mini-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(8, 12, 20, 0.25);
+  border-top-color: #080c14;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+:host-context(html:not(.dark)) .mini-spinner {
+  border-top-color: #1a1208;
+}
+
+/* ═══════════════════════════════════════════════════════
+   QUIZ VIEW
+   ═══════════════════════════════════════════════════════ */
+.quiz-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius);
+  padding: 28px 20px;
+  box-shadow: 0 8px 40px var(--card-shadow);
+}
+
+.quiz-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.quiz-icon {
+  font-size: 1.3rem;
+}
+
+.quiz-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin: 0;
+}
+
+.quiz-question {
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: var(--text-primary);
+  margin-bottom: 18px;
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.quiz-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  background: var(--bg-card-mid);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s, background 0.18s;
+}
+
+.quiz-option:not(:disabled):hover {
+  border-color: var(--gold-border);
+  background: var(--gold-dim);
+}
+
+.quiz-option.selected {
+  border-color: var(--gold);
+  background: var(--gold-dim);
+}
+
+.quiz-option.correct {
+  border-color: var(--emerald);
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.quiz-option.wrong {
+  border-color: var(--danger);
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.quiz-option:disabled {
+  cursor: default;
+}
+
+.opt-letter {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  font-family: 'Cinzel', serif;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.opt-text {
+  flex: 1;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.opt-icon {
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.opt-icon.wrong {
+  color: var(--danger);
+}
+
+.quiz-feedback {
+  margin-top: 18px;
+  text-align: center;
+}
+
+.feedback-correct {
+  color: var(--emerald);
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.feedback-wrong {
+  color: var(--danger);
+  font-size: 0.88rem;
+  margin-bottom: 14px;
+  line-height: 1.6;
+}
+
+.quiz-next-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   REVISION VIEW
+   ═══════════════════════════════════════════════════════ */
+.revision-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius);
+  padding: 28px 22px;
+  text-align: center;
+  box-shadow: 0 8px 40px var(--card-shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.rev-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 18px;
+}
+
+.rev-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+.rev-counter {
+  font-family: 'Cinzel', serif;
+  font-size: 0.70rem;
+  color: var(--text-muted);
+}
+
+.rev-prompt {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+  font-style: italic;
+}
+
+/* Revision Arabic word */
+.rev-arabic {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1.8;
+  margin-bottom: 6px;
+  display: block;
+  text-align: center;
+}
+
+.rev-translit {
+  font-family: 'Cinzel', serif;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-bottom: 18px;
+}
+
+.rev-action-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.rev-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.rev-meaning {
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.rev-days {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.rev-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.btn-remember {
+  padding: 11px 22px;
+  border-radius: var(--radius-sm);
+  background: rgba(74, 222, 128, 0.10);
+  border: 1px solid rgba(74, 222, 128, 0.28);
+  color: var(--emerald);
+  font-family: 'Cinzel', serif;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-remember:hover {
+  background: rgba(74, 222, 128, 0.2);
+}
+
+.btn-forgot {
+  padding: 11px 22px;
+  border-radius: var(--radius-sm);
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  color: var(--danger);
+  font-family: 'Cinzel', serif;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-forgot:hover {
+  background: rgba(248, 113, 113, 0.18);
+}
+
+/* ═══════════════════════════════════════════════════════
+   PROGRESS / STATS VIEW
+   ═══════════════════════════════════════════════════════ */
+.progress-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius);
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 8px 40px var(--card-shadow);
+}
+
+.progress-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.prog-stat-card {
+  background: var(--bg-card-mid);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.prog-stat-card:hover {
+  border-color: var(--gold-border);
+}
+
+.prog-icon {
+  font-size: 1.1rem;
+  margin-bottom: 2px;
+}
+
+.prog-num {
+  font-family: 'Cinzel', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.prog-lbl {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.understanding-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.understanding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.understanding-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.70rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.understanding-pct {
+  font-family: 'Cinzel', serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin: 0;
+}
+
+.understanding-bar {
+  height: 6px;
+  background: var(--progress-track);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.understanding-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--emerald-dark), var(--gold));
+  border-radius: 999px;
+  transition: width 0.7s ease;
+}
+
+.understanding-note {
+  font-size: 0.70rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.history-chart-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .chart-title {
-  font-family: 'Cinzel', serif; font-size: 0.72rem; font-weight: 700;
-  color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase;
-  margin: 0 0 16px; text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 0.70rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0;
+  letter-spacing: 0.07em;
 }
+
 .history-chart {
-  display: flex; align-items: flex-end; justify-content: space-around;
-  gap: 8px; height: 100px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 72px;
 }
+
 .chart-bar-wrap {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 6px; flex: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
 }
+
 .chart-bar-value {
-  font-family: 'Cinzel', serif; font-size: 0.62rem; font-weight: 700;
-  color: var(--gold); min-height: 14px;
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--gold);
+  min-height: 14px;
 }
+
 .chart-bar-track {
-  width: 100%; max-width: 28px; height: 60px;
-  background: var(--bg-field); border-radius: 4px;
-  overflow: hidden; display: flex; align-items: flex-end;
+  flex: 1;
+  width: 100%;
+  background: var(--progress-track);
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
 }
+
 .chart-bar-fill {
   width: 100%;
   background: linear-gradient(to top, var(--emerald-dark), var(--gold));
-  border-radius: 4px; min-height: 0;
-  transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.5s ease;
+  min-height: 2px;
 }
+
 .chart-bar-label {
-  font-size: 0.52rem; font-weight: 600; color: var(--text-muted);
-  letter-spacing: 0.04em; text-transform: uppercase;
+  font-size: 0.56rem;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
-/* Extra stats row */
 .extra-stats-row {
-  display: flex; gap: 10px; margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--bg-card-mid);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
 }
+
 .extra-stat {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 12px 8px; background: var(--bg-card-mid);
-  border: 1px solid var(--card-border); border-radius: var(--radius-sm);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  border-right: 1px solid var(--card-border);
 }
+
+.extra-stat:last-child {
+  border-right: none;
+}
+
 .extra-stat-num {
-  font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700;
-  color: var(--gold); line-height: 1;
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold);
 }
+
 .extra-stat-lbl {
-  font-size: 0.52rem; font-weight: 600; color: var(--text-muted);
-  letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+  font-size: 0.56rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
-/* Learned item enhanced */
+/* Learned words list */
+.learned-list-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.learned-list-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0;
+  letter-spacing: 0.07em;
+}
+
+.learned-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.learned-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg-card-mid);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+}
+
+.li-arabic {
+  /* Arabic word in list */
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--gold);
+  line-height: 1.6;
+  flex-shrink: 0;
+  min-width: 50px;
+  text-align: center;
+}
+
 .li-info {
-  flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
+
+.li-meaning {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .li-date {
-  font-size: 0.58rem; color: var(--text-muted); font-weight: 500;
+  font-size: 0.63rem;
+  color: var(--text-muted);
 }
 
-/* ─── Responsive ─── */
-@media (max-width: 480px) {
-  .word-arabic { font-size: 2.4rem; }
-  .forms-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .progress-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .rev-buttons { flex-direction: column; }
-  .quiz-option { padding: 12px 14px; font-size: 0.82rem; }
-  .explore-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .quiz-next-actions { flex-direction: column; }
-  .extra-stats-row { flex-direction: column; }
-  .progress-strip { flex-wrap: wrap; gap: 8px; padding: 12px; }
-  .progress-divider { display: none; }
-  .progress-stat { min-width: 60px; }
+.li-level {
+  font-family: 'Cinzel', serif;
+  font-size: 0.60rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
+.li-level.mastered {
+  color: var(--gold);
+}
+
+/* ═══════════════════════════════════════════════════════
+   EMPTY STATE  (revision / explore)
+   ═══════════════════════════════════════════════════════ */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 52px 24px;
+  text-align: center;
+}
+
+.empty-icon-lg {
+  font-size: 2.4rem;
+}
+
+.empty-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.empty-subtitle {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 260px;
+  line-height: 1.65;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SHARED BUTTONS
+   ═══════════════════════════════════════════════════════ */
+.btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 20px;
+  background: linear-gradient(135deg, #b8860b, var(--gold), #b8860b);
+  background-size: 200% 100%;
+  color: #080c14;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'Cinzel', serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  box-shadow: 0 4px 18px var(--gold-glow);
+  transition: background-position 0.4s, box-shadow 0.2s, transform 0.15s;
+}
+
+.btn-primary:hover {
+  background-position: right;
+  box-shadow: 0 6px 26px var(--gold-glow);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+:host-context(html:not(.dark)) .btn-primary {
+  color: #1a1208;
+}
+
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.btn-gold:hover {
+  background: rgba(160, 120, 32, 0.2);
+  box-shadow: 0 0 14px var(--gold-glow);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: 'Cinzel', serif;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.btn-ghost:hover {
+  background: var(--text-faint);
+  border-color: var(--gold-border);
+  color: var(--text-primary);
+}
+
+.btn-ghost:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-ghost-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+  font-family: 'Cinzel', serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-ghost-sm:hover {
+  background: var(--text-faint);
+  border-color: var(--gold-border);
+}
+
+.learn-btn {
+  margin-top: 4px;
+}
+
+.mt-4 {
+  margin-top: 16px;
+}
